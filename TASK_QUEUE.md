@@ -9,13 +9,13 @@ Only mark `DONE` with verification evidence.
 - [x] T000 — Create multi-agent handoff protocol
 - [x] T001 — Create persistent project state
 - [x] T002 — Create task queue
-- [ ] T003 — Create work log, decisions, known issues, development rules
-- [ ] T004 — Repository architecture discovery
+- [x] T003 — Create work log, decisions, known issues, development rules
+- [x] T004 — Define repository/system architecture and dependency order
 - [ ] T005 — Baseline test/tooling setup
 
 ## Phase 1 — Foundation
 
-- [ ] T010 — Application architecture
+- [ ] T010 — Application architecture implementation
 - [ ] T011 — Authentication and authorization
 - [ ] T012 — User/profile/settings
 - [ ] T013 — Subscription/entitlement abstraction
@@ -110,3 +110,6 @@ Only mark `DONE` with verification evidence.
 
 ## Queue Rule
 Agents may split a task into subtasks, but must update this file before handing off if task status changes.
+
+## Current Execution Rule
+The repository is still at architecture/control-plane stage. Do not skip directly to live trading, real-money competitions, lottery/gambling, or token functionality. Follow dependency order and verify each milestone before advancing.
