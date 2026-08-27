@@ -9,7 +9,7 @@ STATUS: DONE
 OBJECTIVE:
 Initialize persistent multi-agent continuity for the correct repository.
 
-WHAT WAS INSPECTED:
+WHAT WAS_INSPECTED:
 Confirmed the target repository is `shivampajiyar29/ai-trading-platform`.
 
 WHAT WAS CHANGED:
@@ -56,14 +56,14 @@ STATUS: DONE
 OBJECTIVE:
 Complete the multi-agent control plane and establish the intended modular architecture for the platform before implementation begins.
 
-WHAT WAS INSPECTED:
+WHAT WAS_INSPECTED:
 - Repository metadata and default branch.
 - Existing control-plane files.
 - Current project state.
 - Current task queue.
 - Existing architecture decisions and known issues.
 
-WHAT WAS CHANGED:
+WHAT WAS_CHANGED:
 - Added `docs/ARCHITECTURE.md`.
 - Defined high-level service boundaries.
 - Defined market-data, strategy, backtesting, portfolio, risk, execution, broker, AI/ML, personal-agent, health-agent, security, and observability boundaries.
@@ -104,3 +104,70 @@ T005
 
 LAST_KNOWN_COMMIT:
 a5b31e66c9c256089820fc2ae5ec79619516813b
+
+---
+
+## AGENT-CHATGPT-T005
+
+DATE_TIME: 2026-08-27
+TASK_ID: T005
+STATUS: PARTIAL
+
+OBJECTIVE:
+Establish a safe initial application/tooling baseline without prematurely implementing production trading features.
+
+WHAT WAS_INSPECTED:
+- Repository metadata and default branch.
+- Control-plane files.
+- Existing repository tree.
+- Existing README.
+- Architecture and task queue.
+
+WHAT WAS_CHANGED:
+- Created branch `agent/chatgpt/T005` from `main`.
+- Added `.gitignore` for environment files, secrets, generated artifacts, Node/Python caches, and local model/data artifacts.
+- Added `.env.example` with safe defaults and live trading disabled.
+- Expanded `README.md` with project entry points and development safety guidance.
+- Added root `package.json` and `pnpm-workspace.yaml` for the planned Node workspace.
+- Added `pyproject.toml` with Python 3.12, pytest, coverage, and Ruff configuration.
+- Added `tests/test_baseline.py` as the initial Python test runner check.
+- Added `.prettierrc.json`.
+- Added `.github/workflows/quality.yml` for Python compilation/tests and package manifest validation.
+- Reserved `apps/web/` and `services/` boundaries with `.gitkeep` files.
+
+TESTS_RUN:
+No local runtime was available through the GitHub editing environment, so application tests and CI execution were NOT RUN by this agent.
+
+TEST_RESULTS:
+Configuration/files were created and reviewed through repository reads. Runtime verification remains pending.
+
+SECURITY_CHECK:
+No secrets were added. `.env.example` contains placeholders only. Live trading and automated live trading are disabled by default.
+
+REGRESSION_CHECK:
+Repository was at initialization stage; no existing application functionality was available to regress.
+
+KNOWN_FAILURES:
+Runtime baseline has not yet been executed.
+
+KNOWN_LIMITATIONS:
+No frontend or backend application exists yet. The workspace is intentionally only a tooling baseline.
+
+IMPORTANT_DECISIONS:
+- Keep T005 PARTIAL until CI or local execution provides evidence.
+- Use Python 3.12 for the initial Python tooling baseline.
+- Use pnpm workspace conventions for future Node applications/packages.
+- Keep live trading disabled during foundation work.
+
+DO_NOT_REPEAT:
+Do not mark T005 DONE based only on configuration files. Execute the baseline and verify it first.
+Do not begin live trading or regulated features.
+
+RESUME_POINT:
+Run the baseline locally or inspect the first GitHub Actions run for `agent/chatgpt/T005`. Fix any failures. Once the baseline is green, merge this branch and continue T010.
+
+NEXT_TASK:
+T005 verification, then T010.
+
+LAST_KNOWN_COMMIT:
+57afe34751beb282b2b77f73b723ca41148f735e (state update; branch contains later queue/log commits)
