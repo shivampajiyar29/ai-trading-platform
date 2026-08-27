@@ -1,0 +1,19 @@
+{
+  "name": "@ai-trading-platform/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Core domain types and pure domain logic for the AI trading platform",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}

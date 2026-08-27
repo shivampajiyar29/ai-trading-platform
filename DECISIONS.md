@@ -57,3 +57,27 @@ The future health/repair agent may detect, diagnose, propose/implement fixes in 
 
 Reason:
 The platform may contain financial execution infrastructure.
+
+## ADR-006 — TypeScript Monorepo Baseline
+
+Status: ACCEPTED
+
+Date: 2026-08-27
+
+Decision:
+Use TypeScript (strict) with npm workspaces, ESM modules, TypeScript project references, and Node.js built-in test runner (`node:test`) invoked via `tsx`/`npx` for the application baseline.
+
+Reason:
+- Strong typing for financial domain types (Money, OrderId, etc.).
+- Monorepo supports modular services/packages as defined in ARCHITECTURE.md.
+- Node built-in test runner avoids heavy test framework installs on low-resource agent environments while remaining standard.
+- `npx` keeps the baseline runnable without requiring a permanent `node_modules` tree.
+
+Alternatives considered:
+- pnpm + Turborepo + Vitest (preferred for larger scale; deferred until resources/CI allow).
+- JavaScript only (rejected — financial code benefits from types).
+
+Consequences:
+- Future agents should preserve strict TypeScript and the packages/services/apps layout.
+- When adding local `devDependencies`, prefer keeping the existing `npm run test` / `npm run typecheck` contracts.
+- Do not introduce a different package manager without updating this ADR and the baseline scripts.

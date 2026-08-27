@@ -104,3 +104,87 @@ T005
 
 LAST_KNOWN_COMMIT:
 a5b31e66c9c256089820fc2ae5ec79619516813b
+
+---
+
+## GROQ-TRADING-01
+
+DATE_TIME: 2026-08-27T18:30:00+05:30
+TASK_ID: T005
+TASK_TITLE: Baseline test/tooling setup
+STATUS: DONE
+
+OBJECTIVE:
+Establish a reproducible application, TypeScript, and test baseline so subsequent foundation work (T010+) can proceed with verification gates.
+
+WHAT I INSPECTED:
+- All control-plane files (AI_AGENT_HANDOFF, PROJECT_STATE, TASK_QUEUE, WORK_LOG, DECISIONS, KNOWN_ISSUES, DEVELOPMENT_RULES).
+- docs/ARCHITECTURE.md and docs/AI_AGENT_START_HERE.md.
+- Git status/branch/log (main, clean, architecture-docs only).
+- Empty application tree (no prior source code).
+
+WHAT I CHANGED:
+- Added TypeScript monorepo skeleton (npm workspaces, tsconfig.base.json, project references).
+- Added packages/domain with Money and OrderId value objects (strict, immutable, financial-safe minor units).
+- Added packages/testing shared helpers.
+- Added Node.js built-in unit tests (12 tests) run via tsx/npx.
+- Added .gitignore, .env.example, README baseline instructions.
+- Recorded ADR-006 (TypeScript monorepo baseline).
+- Marked KI-001 resolved; added KI-004 (npx/low-memory note).
+
+FILES_CHANGED:
+- package.json (new)
+- tsconfig.json, tsconfig.base.json (new)
+- .gitignore, .env.example, .prettierrc, .prettierignore (new)
+- packages/domain/** (new)
+- packages/testing/** (new)
+- apps/.gitkeep, services/.gitkeep (new)
+- README.md
+- DECISIONS.md (ADR-006)
+- KNOWN_ISSUES.md
+- PROJECT_STATE.md
+- TASK_QUEUE.md
+- WORK_LOG.md
+
+TESTS_RUN:
+- npm test (node:test via tsx) — 12 tests
+- npm run typecheck (tsc --build)
+
+TEST_RESULTS:
+- 12/12 unit tests PASS
+- Typecheck PASS (exit 0)
+
+SECURITY_CHECK:
+- No secrets introduced.
+- .env.example contains only placeholders.
+- No broker/live-trading code.
+
+REGRESSION_CHECK:
+- N/A (first application code). Prior docs-only state preserved.
+
+KNOWN_FAILURES:
+- None for baseline.
+
+KNOWN_LIMITATIONS:
+- Full local node_modules install is fragile under low-memory agent sandboxes; scripts use npx.
+- No ESLint/Prettier enforcement in CI yet (configs partially prepared earlier, not wired).
+- No CI pipeline, Docker, or database yet.
+- services/ and apps/ are placeholders only.
+
+IMPORTANT_DECISIONS:
+- ADR-006: TypeScript + npm workspaces + node:test + npx baseline.
+- Money uses bigint minor units; currency is ISO-like 3-letter code.
+
+DO_NOT_REPEAT:
+- Do not re-initialize control plane or re-create T005 baseline.
+- Do not mark external integrations as working.
+- Do not enable live trading.
+
+RESUME_POINT:
+T010 — Application architecture implementation. Start by reading packages/domain and docs/ARCHITECTURE.md, then scaffold the next foundation slice (e.g. shared contracts package, config, or minimal API gateway skeleton) with tests.
+
+NEXT_TASK:
+T010
+
+LAST_KNOWN_COMMIT:
+(pending commit after this checkpoint)

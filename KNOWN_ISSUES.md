@@ -2,10 +2,10 @@
 
 ## KI-001 — No Application Baseline Yet
 
-Status: OPEN
+Status: RESOLVED
 Severity: INFO
 
-The repository is at initialization stage. The first implementation agent must establish the application architecture and test baseline before feature development.
+Resolved by T005. TypeScript monorepo baseline, domain package, and unit tests are in place.
 
 ## KI-002 — Regulatory Scope Not Yet Implemented
 
@@ -20,3 +20,10 @@ Status: OPEN
 Severity: INFO
 
 No broker, exchange, market-data, AI, payment, or news integration should be considered supported until independently verified and documented.
+
+## KI-004 — Local node_modules Install Fragile on Constrained Agents
+
+Status: OPEN
+Severity: LOW
+
+Full `npm install` of TypeScript toolchain can be slow or fail under low-memory agent sandboxes. Baseline scripts use `npx` so tests/typecheck work without a permanent install. Future CI or developer machines should pin local devDependencies when practical.

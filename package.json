@@ -1,0 +1,22 @@
+{
+  "name": "ai-trading-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Modular AI-powered global trading platform",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npx -p typescript@5.7.2 tsc --build",
+    "clean": "rm -rf packages/*/dist services/*/dist apps/*/dist coverage *.tsbuildinfo packages/*/*.tsbuildinfo",
+    "test": "npx -p tsx@4.19.2 tsx --test packages/domain/src/*.test.ts",
+    "typecheck": "npx -p typescript@5.7.2 tsc --build --force",
+    "validate": "npm run typecheck && npm run test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {}
+}
