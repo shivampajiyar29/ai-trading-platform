@@ -4,7 +4,7 @@ Modular AI-powered global trading platform.
 
 ## Status
 
-Architecture and control-plane stage. Application foundation baseline (T005) is in place.
+Control-plane, tooling baseline (T005), and initial application architecture (T010) are in place. No live trading or broker integration.
 
 See:
 
@@ -33,9 +33,13 @@ npm run validate
 ```
 ai-trading-platform/
 ├── packages/
-│   ├── domain/          # Core domain types (Money, OrderId, …)
+│   ├── domain/          # Money, OrderId, InstrumentId
+│   ├── contracts/       # TradingMode, feature flags, execution policy
+│   ├── config/          # Env loader (live trading OFF by default)
+│   ├── api-kernel/      # HTTP request kernel (health/ready only)
 │   └── testing/         # Shared test helpers
-├── services/            # (placeholder)
+├── services/
+│   └── api-gateway/     # Skeleton pointer to api-kernel
 ├── apps/                # (placeholder)
 ├── docs/
 │   └── ARCHITECTURE.md

@@ -2,6 +2,9 @@
   "files": [],
   "references": [
     { "path": "./packages/domain" },
-    { "path": "./packages/testing" }
+    { "path": "./packages/testing" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/config" },
+    { "path": "./packages/api-kernel" }
   ]
 }

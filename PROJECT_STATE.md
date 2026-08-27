@@ -1,43 +1,36 @@
 # AI Trading Platform — Project State
 
 ## Current Status
-STATUS: FOUNDATION_BASELINE_READY
+STATUS: FOUNDATION_ARCHITECTURE_SLICE_READY
 
 Repository: `shivampajiyar29/ai-trading-platform`
 Default branch: `main`
 
-The repository has completed the control-plane and the initial application/test/tooling baseline (T005). No production trading feature is marked complete.
+Control-plane, T005 tooling baseline, and T010 application-architecture slice are in place. No production trading feature is complete. Live trading remains disabled by default.
 
 ## Verified Work
-- Multi-agent handoff protocol (`AI_AGENT_HANDOFF.md`).
-- Persistent project-state/task/work-log controls.
-- Architecture and dependency order (`docs/ARCHITECTURE.md`).
-- Task queue aligned with architecture.
-- **T005 baseline:**
-  - TypeScript strict monorepo (npm workspaces).
-  - `packages/domain` with `Money` and `OrderId` value objects.
-  - `packages/testing` shared helpers.
-  - Node.js built-in test runner via `tsx`/`npx`.
-  - `tsc --build` project references.
-  - 12 unit tests passing.
-  - Typecheck passing.
-- No external broker, exchange, market-data, AI, payment, or news integration is verified.
+- Multi-agent control plane and architecture docs.
+- T005 TypeScript monorepo baseline (`packages/domain`, `packages/testing`, `npx` test/typecheck).
+- T010 application architecture slice:
+  - `packages/contracts` — TradingMode, feature flags, AppError, execution policy.
+  - `packages/config` — env loader; live flags default OFF.
+  - `packages/api-kernel` — health/ready/policy HTTP handlers; no order routes.
+  - `packages/domain` — InstrumentId added.
+  - Paper path never becomes live; live requires explicit flag and no kill switch.
+- 38 unit tests passing; typecheck passing.
+- No broker, exchange, market-data, AI, payment, or news integration is verified.
 
 ## Current Checkpoint
-CHECKPOINT_ID: BASELINE-001
-STATUS: READY_FOR_FOUNDATION_T010
+CHECKPOINT_ID: FOUNDATION-010
+STATUS: READY_FOR_T011_AUTH
 
 ## Resume Point
-Next implementation agent: **T010 — Application architecture implementation**.
-Inspect existing packages/domain and packages/testing, then scaffold the next foundation pieces (e.g. config package, API gateway skeleton, or shared contracts) according to ARCHITECTURE.md and DEVELOPMENT_RULES.md. Do not begin live trading or regulated features.
+Next implementation agent: **T011 — Authentication and authorization**.
+Do not implement live trading, brokers, or market-data providers.
+Keep using `resolveExecutionPath` / `assertExecutionAllowed` for any future execution entry points.
 
 ## Product Direction
-Planned capabilities include multiple AI models/agents, user model training, strategy/Pine tooling, global market data and charts, strategy building, backtesting, broker/exchange adapters, paper trading, controlled live trading, low-latency execution, 2D/3D visualization, AI market explanations, automated trading, web/mobile UI, security, personal AI agents, learning, competitions, subscriptions, globalization, and future extensible modules.
-
-These are requirements, not completed features.
-
-## Architecture Source of Truth
-See `docs/ARCHITECTURE.md`.
+Planned capabilities remain requirements, not completed features. See `docs/ARCHITECTURE.md`.
 
 ## Development Principle
-Build small independently testable milestones. Every milestone must leave a reproducible checkpoint for the next AI agent.
+Build small independently testable milestones. The repository is the persistent memory for the next agent.

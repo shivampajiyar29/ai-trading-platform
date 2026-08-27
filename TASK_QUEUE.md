@@ -15,7 +15,7 @@ Only mark `DONE` with verification evidence.
 
 ## Phase 1 — Foundation
 
-- [ ] T010 — Application architecture implementation
+- [x] T010 — Application architecture implementation
 - [ ] T011 — Authentication and authorization
 - [ ] T012 — User/profile/settings
 - [ ] T013 — Subscription/entitlement abstraction

@@ -188,3 +188,80 @@ T010
 
 LAST_KNOWN_COMMIT:
 f46bbd4
+
+---
+
+## CODEX-T010-01
+
+DATE_TIME: 2026-08-27T20:20:00+05:30
+TASK_ID: T010
+TASK_TITLE: Application architecture implementation
+STATUS: DONE
+
+OBJECTIVE:
+Verify T005 independently, then implement the first application-architecture slice: contracts, config, execution isolation, and API kernel.
+
+WHAT I INSPECTED:
+- Control-plane files and T005 checkpoint.
+- packages/domain Money/OrderId and tests.
+- Re-ran npm run validate on T005 code: 12/12 PASS, typecheck PASS (VERIFIED).
+
+WHAT I CHANGED:
+- packages/contracts: TradingMode, FeatureFlags, AppError, resolveExecutionPath, assertExecutionAllowed.
+- packages/config: loadConfig with live trading OFF by default.
+- packages/api-kernel: GET /health, /ready, /v1/execution/policy; 404 for order routes.
+- packages/domain: InstrumentId.
+- services/api-gateway README skeleton.
+- ADR-007, KI-005, project memory updates.
+
+FILES_CHANGED:
+- packages/contracts/**
+- packages/config/**
+- packages/api-kernel/**
+- packages/domain/src/instrument-id.ts
+- packages/domain/src/instrument-id.test.ts
+- packages/domain/src/index.ts
+- services/api-gateway/README.md
+- package.json, tsconfig.json, .env.example, README.md
+- DECISIONS.md, KNOWN_ISSUES.md, PROJECT_STATE.md, TASK_QUEUE.md, WORK_LOG.md
+
+TESTS_RUN:
+- npm run validate (typecheck + unit tests)
+
+TEST_RESULTS:
+- Typecheck PASS
+- 38/38 unit tests PASS (T005 regression 12 + T010 26)
+
+SECURITY_CHECK:
+- Live trading defaults false.
+- Kill switch blocks live.
+- Paper never routes to live.
+- No broker credentials or secrets.
+- No order execution routes.
+
+REGRESSION_CHECK:
+- Existing Money/OrderId tests still pass.
+
+KNOWN_FAILURES:
+- None.
+
+KNOWN_LIMITATIONS:
+- Packages are not workspace-linked at runtime (KI-005).
+- API kernel is in-process (no listening HTTP server).
+- Auth, users, entitlements, observability, and security foundation are not started (T011–T015).
+
+IMPORTANT_DECISIONS:
+- ADR-007 live-off-by-default encoded in resolveExecutionPath.
+
+DO_NOT_REPEAT:
+- Do not re-do T005 or T010.
+- Do not add broker adapters or live order routes next.
+
+RESUME_POINT:
+T011 — Authentication and authorization. Start from packages/contracts AppError and packages/api-kernel handleRequest. Add auth as a gate in front of future routes; do not touch execution policy semantics.
+
+NEXT_TASK:
+T011
+
+LAST_KNOWN_COMMIT:
+(pending)

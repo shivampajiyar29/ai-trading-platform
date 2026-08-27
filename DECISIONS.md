@@ -81,3 +81,18 @@ Consequences:
 - Future agents should preserve strict TypeScript and the packages/services/apps layout.
 - When adding local `devDependencies`, prefer keeping the existing `npm run test` / `npm run typecheck` contracts.
 - Do not introduce a different package manager without updating this ADR and the baseline scripts.
+
+## ADR-007 — Live Trading Off by Default in Code
+
+Status: ACCEPTED
+
+Date: 2026-08-27
+
+Decision:
+`LIVE_TRADING_ENABLED` and `AUTOMATED_LIVE_TRADING_ENABLED` default to false. Paper requests never resolve to the live execution path. Live requests are blocked unless the mode is live, the live flag is on, and the kill switch is off.
+
+Reason:
+Architecture and trading-safety rules require paper/live isolation and a kill switch before any broker work.
+
+Consequence:
+T011+ must keep using `resolveExecutionPath` / `assertExecutionAllowed` rather than calling a broker from a strategy or API handler.

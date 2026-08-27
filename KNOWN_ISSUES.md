@@ -27,3 +27,10 @@ Status: OPEN
 Severity: LOW
 
 Full `npm install` of TypeScript toolchain can be slow or fail under low-memory agent sandboxes. Baseline scripts use `npx` so tests/typecheck work without a permanent install. Future CI or developer machines should pin local devDependencies when practical.
+
+## KI-005 — Packages Are Not Yet Linked at Runtime
+
+Status: OPEN
+Severity: INFO
+
+Packages compile independently. They do not import each other by workspace package name yet because a full workspace install is not part of the baseline. Cross-package composition happens by passing plain objects (structural typing) until T011+ adds a linked workspace install or path mapping.
