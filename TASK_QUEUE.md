@@ -11,7 +11,7 @@ Only mark `DONE` with verification evidence.
 - [x] T002 — Create task queue
 - [x] T003 — Create work log, decisions, known issues, development rules
 - [x] T004 — Define repository/system architecture and dependency order
-- [ ] T005 — Baseline test/tooling setup
+- [ ] T005 — Baseline test/tooling setup — PARTIAL; configuration and CI added, execution still required
 
 ## Phase 1 — Foundation
 
