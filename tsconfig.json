@@ -6,6 +6,7 @@
     { "path": "./packages/contracts" },
     { "path": "./packages/config" },
     { "path": "./packages/api-kernel" },
-    { "path": "./packages/auth" }
+    { "path": "./packages/auth" },
+    { "path": "./packages/users" }
   ]
 }

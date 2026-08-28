@@ -12,6 +12,7 @@ const baseConfig = {
 
 const principals: Record<string, GatewayPrincipal> = {
   user: { id: 'user-1', role: 'user' },
+  userB: { id: 'user-2', role: 'user' },
   admin: { id: 'admin-1', role: 'admin' },
 };
 
@@ -22,6 +23,9 @@ const auth: GatewayAuth = {
     }
     if (authorizationHeader === 'Bearer user-token') {
       return principals.user as GatewayPrincipal;
+    }
+    if (authorizationHeader === 'Bearer user-b-token') {
+      return principals.userB as GatewayPrincipal;
     }
     if (authorizationHeader === 'Bearer admin-token') {
       return principals.admin as GatewayPrincipal;
@@ -35,7 +39,7 @@ const auth: GatewayAuth = {
     if (permission === 'public:read') {
       return true;
     }
-    if (permission === 'account:read') {
+    if (permission === 'account:read' || permission === 'account:write') {
       return principal.role === 'user' || principal.role === 'admin';
     }
     return principal.role === 'admin';
@@ -135,4 +139,61 @@ describe('handleRequest', () => {
     assert.equal(adminBody.role, 'admin');
     assert.equal(adminBody.liveTradingEnabled, false);
   });
+
+  it('rejects anonymous profile and settings access', () => {
+    const profile = handleRequest({ method: 'GET', path: '/v1/profile' }, baseConfig, auth);
+    assert.equal(profile.status, 401);
+    const settings = handleRequest({ method: 'PATCH', path: '/v1/settings', body: { theme: 'dark' } }, baseConfig, auth);
+    assert.equal(settings.status, 401);
+  });
+
+  it('scopes profile and settings to the authenticated principal', () => {
+    const directory: Record<string, { name: string; theme: string }> = {};
+    const users = {
+      getProfile(userId: string) {
+        return { userId, displayName: directory[userId]?.name ?? userId };
+      },
+      updateProfile(userId: string, patch: unknown) {
+        const body = patch as { displayName?: string; userId?: string };
+        directory[userId] = { name: body.displayName ?? userId, theme: directory[userId]?.theme ?? 'system' };
+        return { userId, displayName: directory[userId].name, ignoredClientUserId: body.userId };
+      },
+      getSettings(userId: string) {
+        return { userId, theme: directory[userId]?.theme ?? 'system', liveTradingEnabledByPreference: false };
+      },
+      updateSettings(userId: string, patch: unknown) {
+        const body = patch as { theme?: string };
+        directory[userId] = { name: directory[userId]?.name ?? userId, theme: body.theme ?? 'system' };
+        return { userId, theme: directory[userId].theme, liveTradingEnabledByPreference: false };
+      },
+    };
+
+    const aPatch = handleRequest(
+      {
+        method: 'PATCH',
+        path: '/v1/profile',
+        headers: { authorization: 'Bearer user-token' },
+        body: { displayName: 'Ada', userId: 'user-2' },
+      },
+      baseConfig,
+      auth,
+      users,
+    );
+    assert.equal(aPatch.status, 200);
+    const aBody = aPatch.body as { userId: string; displayName: string };
+    assert.equal(aBody.userId, 'user-1');
+    assert.equal(aBody.displayName, 'Ada');
+
+    const bGet = handleRequest(
+      { method: 'GET', path: '/v1/profile', headers: { authorization: 'Bearer user-b-token' } },
+      baseConfig,
+      auth,
+      users,
+    );
+    assert.equal(bGet.status, 200);
+    const bBody = bGet.body as { userId: string; displayName: string };
+    assert.equal(bBody.userId, 'user-2');
+    assert.equal(bBody.displayName, 'user-2');
+  });
 });
+

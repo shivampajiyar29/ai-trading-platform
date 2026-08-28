@@ -1,13 +1,13 @@
 export const ROLES = ['anonymous', 'user', 'admin'] as const;
 export type Role = (typeof ROLES)[number];
 
-export const PERMISSIONS = ['public:read', 'account:read', 'admin:read'] as const;
+export const PERMISSIONS = ['public:read', 'account:read', 'account:write', 'admin:read'] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   anonymous: ['public:read'],
-  user: ['public:read', 'account:read'],
-  admin: ['public:read', 'account:read', 'admin:read'],
+  user: ['public:read', 'account:read', 'account:write'],
+  admin: ['public:read', 'account:read', 'account:write', 'admin:read'],
 };
 
 export function permissionsFor(role: Role): readonly Permission[] {

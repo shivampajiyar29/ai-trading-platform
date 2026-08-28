@@ -338,3 +338,93 @@ T012
 
 LAST_KNOWN_COMMIT:
 6f633e9
+
+---
+
+## GROK-T012-01
+
+DATE_TIME: 2026-08-28T18:55:00+05:30
+TASK_ID: T012
+STATUS: DONE
+
+T011_VERIFICATION:
+Independent `npm run validate` on T011 tree: typecheck PASS, 51/51 PASS. Auth, scrypt, sessions, expiry, revoke, Bearer, anonymous, 401 invalid token, /v1/me, /v1/admin/status, public health/ready/policy, /v1/orders 404, live default off — confirmed in existing tests.
+
+OBJECTIVE:
+Add a user profile and settings layer that is owned by the authenticated principal and cannot enable live trading.
+
+WHAT_I_INSPECTED:
+- Control-plane files, T011 source, execution policy, RBAC roles.
+- Git main clean at e8f30ca / 6f633e9.
+
+WHAT_I_CHANGED:
+- packages/users: profile/settings validation, UserDirectory, InMemoryUserDirectory, UserService, ownership helper.
+- packages/auth: added account:write for user and admin.
+- packages/api-kernel: GET/PATCH /v1/profile and /v1/settings; request body; anonymous on protected routes → 401; ownership from principal.id only.
+- ADR-009, KI-006.
+
+FILES_CHANGED:
+- packages/users/**
+- packages/auth/src/roles.ts
+- packages/auth/src/auth.test.ts
+- packages/api-kernel/src/handle-request.ts
+- packages/api-kernel/src/handle-request.test.ts
+- packages/api-kernel/src/index.ts
+- tsconfig.json
+- PROJECT_STATE.md, TASK_QUEUE.md, WORK_LOG.md, DECISIONS.md, KNOWN_ISSUES.md, README.md
+
+TESTS_RUN:
+- npm run validate
+
+TEST_RESULTS:
+- Typecheck PASS
+- 59/59 PASS
+
+SECURITY_CHECK:
+- No password hashes, tokens, or broker credentials in profile/settings views.
+- Mass-assignment of userId/role/password/liveTradingEnabled rejected.
+- Client userId does not select the resource; principal.id does.
+
+AUTHORIZATION_CHECK:
+- Anonymous → 401 on profile/settings.
+- User A token cannot read User B profile through /v1/profile.
+- requireOwnedUserId('user-a','user-b') → 403.
+- Admin is not a live-trading bypass.
+
+REGRESSION_CHECK:
+- T005/T010/T011 tests still pass.
+
+INDEPENDENT_REVIEW:
+1. Cross-user access blocked at service and kernel (principal id).
+2. Anonymous blocked.
+3. Auth fields not writable on profile/settings.
+4. Settings cannot set liveTradingEnabled.
+5. Defaults: paper preference, notifications off.
+6. Profile package separate from auth.
+7. UserDirectory interface ready for a database.
+8. T011 routes and execution policy unchanged in behavior.
+9. 59/59 including prior suites.
+10. GET/PATCH /v1/profile and /v1/settings are client-friendly.
+
+KNOWN_FAILURES:
+- None.
+
+KNOWN_LIMITATIONS:
+- In-memory directory only (KI-006).
+- No email verification, avatar, or multi-device preferences.
+
+IMPORTANT_DECISIONS:
+- ADR-009.
+
+DO_NOT_REPEAT:
+- Do not trust client userId.
+- Do not store liveTradingEnabled on settings.
+
+RESUME_POINT:
+T013 — Subscription/entitlement abstraction. Gate features with entitlements; do not let a plan flag enable live trading.
+
+NEXT_TASK:
+T013
+
+COMMIT:
+(pending)

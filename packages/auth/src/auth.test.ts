@@ -17,6 +17,7 @@ describe('RBAC', () => {
   it('gives user account:read but not admin:read', () => {
     const user = principalFor('user-1', 'user');
     assert.equal(can(user, 'account:read'), true);
+    assert.equal(can(user, 'account:write'), true);
     assert.equal(can(user, 'admin:read'), false);
     assert.throws(
       () => authorize(user, 'admin:read'),
@@ -28,6 +29,7 @@ describe('RBAC', () => {
     const admin = principalFor('admin-1', 'admin');
     assert.equal(can(admin, 'public:read'), true);
     assert.equal(can(admin, 'account:read'), true);
+    assert.equal(can(admin, 'account:write'), true);
     assert.equal(can(admin, 'admin:read'), true);
     authorize(admin, 'admin:read');
   });

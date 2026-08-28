@@ -6,4 +6,5 @@ export type {
   GatewayPrincipal,
   GatewayRequest,
   GatewayResponse,
+  GatewayUsers,
 } from './handle-request.js';

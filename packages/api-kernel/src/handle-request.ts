@@ -10,6 +10,7 @@ export type GatewayRequest = {
   method: string;
   path: string;
   headers?: Record<string, string | undefined>;
+  body?: unknown;
 };
 
 export type GatewayResponse = {
@@ -23,7 +24,14 @@ export type GatewayPrincipal = {
   role: 'anonymous' | 'user' | 'admin';
 };
 
-export type GatewayPermission = 'public:read' | 'account:read' | 'admin:read';
+export type GatewayPermission = 'public:read' | 'account:read' | 'account:write' | 'admin:read';
+
+export type GatewayUsers = {
+  getProfile(userId: string): unknown;
+  updateProfile(userId: string, patch: unknown): unknown;
+  getSettings(userId: string): unknown;
+  updateSettings(userId: string, patch: unknown): unknown;
+};
 
 export type GatewayAuth = {
   authenticate(authorizationHeader: string | undefined): GatewayPrincipal;
@@ -71,8 +79,11 @@ function json(
 }
 
 function requiredPermission(method: string, path: string): GatewayPermission | undefined {
-  if (method === 'GET' && path === '/v1/me') {
+  if (method === 'GET' && (path === '/v1/me' || path === '/v1/profile' || path === '/v1/settings')) {
     return 'account:read';
+  }
+  if (method === 'PATCH' && (path === '/v1/profile' || path === '/v1/settings')) {
+    return 'account:write';
   }
   if (method === 'GET' && path === '/v1/admin/status') {
     return 'admin:read';
@@ -113,6 +124,7 @@ export function handleRequest(
   req: GatewayRequest,
   config: GatewayConfig,
   auth?: GatewayAuth,
+  users?: GatewayUsers,
 ): GatewayResponse {
   const correlationId = correlationIdFrom(req);
   const method = req.method.toUpperCase();
@@ -138,6 +150,18 @@ export function handleRequest(
     } catch (err) {
       const parsed = authErrorBody(err, 'UNAUTHORIZED', 'Authentication required', 401);
       return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+    }
+    if (principal.role === 'anonymous') {
+      return json(
+        401,
+        {
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+        },
+        correlationId,
+      );
     }
     if (!auth.can(principal, permission)) {
       return json(
@@ -201,6 +225,33 @@ export function handleRequest(
       },
       correlationId,
     );
+  }
+
+  if (path === '/v1/profile' || path === '/v1/settings') {
+    if (!users) {
+      return json(
+        500,
+        { error: { code: 'PERSISTENCE_FAILURE', message: 'User directory is not configured' } },
+        correlationId,
+      );
+    }
+    try {
+      if (method === 'GET' && path === '/v1/profile') {
+        return json(200, users.getProfile(principal.id), correlationId);
+      }
+      if (method === 'PATCH' && path === '/v1/profile') {
+        return json(200, users.updateProfile(principal.id, req.body), correlationId);
+      }
+      if (method === 'GET' && path === '/v1/settings') {
+        return json(200, users.getSettings(principal.id), correlationId);
+      }
+      if (method === 'PATCH' && path === '/v1/settings') {
+        return json(200, users.updateSettings(principal.id, req.body), correlationId);
+      }
+    } catch (err) {
+      const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
+      return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+    }
   }
 
   if (method === 'GET' && path === '/v1/admin/status') {

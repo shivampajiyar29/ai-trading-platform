@@ -33,4 +33,11 @@ Full `npm install` of TypeScript toolchain can be slow or fail under low-memory 
 Status: OPEN
 Severity: INFO
 
-Packages compile independently. They do not import each other by workspace package name yet because a full workspace install is not part of the baseline. Cross-package composition happens by passing plain objects (structural typing) until T011+ adds a linked workspace install or path mapping.
+Packages compile independently. They do not import each other by workspace package name yet because a full workspace install is not part of the baseline. Cross-package composition happens by passing plain objects (structural typing) until a linked workspace install or path mapping is added.
+
+## KI-006 — User Directory Is In-Memory Only
+
+Status: OPEN
+Severity: INFO
+
+T012 profiles and settings persist only in `InMemoryUserDirectory`. Data is lost on process restart. Replace the directory implementation when a database is introduced; keep the `UserDirectory` interface.

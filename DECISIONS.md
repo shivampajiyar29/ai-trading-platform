@@ -112,3 +112,18 @@ T011 needs a testable auth gate before user profiles (T012) and before any order
 Consequence:
 Do not put broker credentials or live-trading rights on a principal. Admin permission is operational, not a live-trading bypass. JWT libraries are deferred until a signed-token design is required.
 
+## ADR-009 — Profile Separate From Auth; Settings Cannot Enable Live Trading
+
+Status: ACCEPTED
+
+Date: 2026-08-28
+
+Decision:
+Keep profile/settings in `packages/users` behind a `UserDirectory` interface. The authenticated principal id is the only ownership key. A trading-mode preference never sets platform live-trading flags.
+
+Reason:
+Identity secrets stay in auth. Persistence can change later without rewriting the API. User preferences must not bypass risk or compliance.
+
+Consequence:
+Do not add `liveTradingEnabled` to settings. Do not accept client `userId` for resource selection on `/v1/profile` or `/v1/settings`.
+
