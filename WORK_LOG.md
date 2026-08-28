@@ -265,3 +265,76 @@ T011
 
 LAST_KNOWN_COMMIT:
 16448fd
+
+---
+
+## GROK-T011-01
+
+DATE_TIME: 2026-08-28T18:40:00+05:30
+TASK_ID: T011
+TASK_TITLE: Authentication and authorization
+STATUS: DONE
+
+OBJECTIVE:
+Add a testable authentication and RBAC gate without changing execution-policy or enabling live trading.
+
+WHAT I INSPECTED:
+- T010 checkpoint (FOUNDATION-010) and clean git tree on main.
+- packages/api-kernel handleRequest and contracts AppError.
+- Re-confirmed T010 tests still present before changes.
+
+WHAT I CHANGED:
+- packages/auth: Principal, roles/permissions, scrypt credentials, opaque sessions, Bearer authenticate, authorize/can.
+- packages/api-kernel: optional GatewayAuth port; GET /v1/me and GET /v1/admin/status.
+- contracts ErrorCodes: UNAUTHORIZED, FORBIDDEN.
+- ADR-008.
+
+FILES_CHANGED:
+- packages/auth/**
+- packages/api-kernel/src/handle-request.ts
+- packages/api-kernel/src/handle-request.test.ts
+- packages/api-kernel/src/index.ts
+- packages/contracts/src/app-error.ts
+- tsconfig.json
+- PROJECT_STATE.md, TASK_QUEUE.md, WORK_LOG.md, DECISIONS.md, README.md
+
+TESTS_RUN:
+- npm run validate
+
+TEST_RESULTS:
+- Typecheck PASS
+- 51/51 unit tests PASS
+
+SECURITY_CHECK:
+- Passwords hashed with scrypt; never stored plaintext.
+- Invalid Bearer token is 401 (not anonymous).
+- User cannot access admin route (403).
+- Public health/ready/policy unchanged.
+- Live trading still default off; no order routes; no broker credentials.
+
+REGRESSION_CHECK:
+- Existing T005/T010 tests still pass.
+
+KNOWN_FAILURES:
+- None.
+
+KNOWN_LIMITATIONS:
+- In-memory credential and session stores only (not durable).
+- No MFA, email verification, refresh tokens, or password reset (future).
+- Auth package is not workspace-linked into the kernel; kernel uses an injected port (KI-005).
+
+IMPORTANT_DECISIONS:
+- ADR-008 opaque Bearer sessions + RBAC.
+
+DO_NOT_REPEAT:
+- Do not treat admin role as a live-trading bypass.
+- Do not store plaintext passwords.
+
+RESUME_POINT:
+T012 — User/profile/settings. Build on packages/auth Principal and session store. Keep /v1/me as identity-only until profile fields are added.
+
+NEXT_TASK:
+T012
+
+LAST_KNOWN_COMMIT:
+(pending)

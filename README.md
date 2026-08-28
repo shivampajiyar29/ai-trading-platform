@@ -4,7 +4,7 @@ Modular AI-powered global trading platform.
 
 ## Status
 
-Control-plane, tooling baseline (T005), and initial application architecture (T010) are in place. No live trading or broker integration.
+Control-plane, tooling baseline (T005), application architecture (T010), and auth/RBAC (T011) are in place. No live trading or broker integration.
 
 See:
 
@@ -36,7 +36,8 @@ ai-trading-platform/
 │   ├── domain/          # Money, OrderId, InstrumentId
 │   ├── contracts/       # TradingMode, feature flags, execution policy
 │   ├── config/          # Env loader (live trading OFF by default)
-│   ├── api-kernel/      # HTTP request kernel (health/ready only)
+│   ├── api-kernel/      # HTTP request kernel (health/ready + auth gates)
+│   ├── auth/            # RBAC, sessions, credential verification
 │   └── testing/         # Shared test helpers
 ├── services/
 │   └── api-gateway/     # Skeleton pointer to api-kernel

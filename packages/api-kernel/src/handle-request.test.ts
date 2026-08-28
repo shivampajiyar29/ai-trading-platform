@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { handleRequest } from './handle-request.js';
+import { handleRequest, type GatewayAuth, type GatewayPrincipal } from './handle-request.js';
 
 const baseConfig = {
   serviceName: 'api-gateway',
@@ -8,6 +8,38 @@ const baseConfig = {
   tradingMode: 'paper' as const,
   liveTradingEnabled: false,
   killSwitchActive: false,
+};
+
+const principals: Record<string, GatewayPrincipal> = {
+  user: { id: 'user-1', role: 'user' },
+  admin: { id: 'admin-1', role: 'admin' },
+};
+
+const auth: GatewayAuth = {
+  authenticate(authorizationHeader) {
+    if (!authorizationHeader) {
+      return { id: 'anonymous', role: 'anonymous' };
+    }
+    if (authorizationHeader === 'Bearer user-token') {
+      return principals.user as GatewayPrincipal;
+    }
+    if (authorizationHeader === 'Bearer admin-token') {
+      return principals.admin as GatewayPrincipal;
+    }
+    const err = new Error('Invalid or expired session') as Error & { code: string; status: number };
+    err.code = 'UNAUTHORIZED';
+    err.status = 401;
+    throw err;
+  },
+  can(principal, permission) {
+    if (permission === 'public:read') {
+      return true;
+    }
+    if (permission === 'account:read') {
+      return principal.role === 'user' || principal.role === 'admin';
+    }
+    return principal.role === 'admin';
+  },
 };
 
 describe('handleRequest', () => {
@@ -51,5 +83,56 @@ describe('handleRequest', () => {
 
     const order = handleRequest({ method: 'POST', path: '/v1/orders' }, baseConfig);
     assert.equal(order.status, 404);
+  });
+
+  it('requires auth for /v1/me even when no auth port is configured', () => {
+    const res = handleRequest({ method: 'GET', path: '/v1/me' }, baseConfig);
+    assert.equal(res.status, 401);
+    const body = res.body as { error: { code: string } };
+    assert.equal(body.error.code, 'UNAUTHORIZED');
+  });
+
+  it('returns the authenticated principal on /v1/me', () => {
+    const res = handleRequest(
+      { method: 'GET', path: '/v1/me', headers: { authorization: 'Bearer user-token' } },
+      baseConfig,
+      auth,
+    );
+    assert.equal(res.status, 200);
+    const body = res.body as { id: string; role: string };
+    assert.equal(body.id, 'user-1');
+    assert.equal(body.role, 'user');
+  });
+
+  it('rejects a bad token on protected routes', () => {
+    const res = handleRequest(
+      { method: 'GET', path: '/v1/me', headers: { authorization: 'Bearer bad' } },
+      baseConfig,
+      auth,
+    );
+    assert.equal(res.status, 401);
+    const body = res.body as { error: { code: string } };
+    assert.equal(body.error.code, 'UNAUTHORIZED');
+  });
+
+  it('forbids users from admin routes and allows admins', () => {
+    const userRes = handleRequest(
+      { method: 'GET', path: '/v1/admin/status', headers: { authorization: 'Bearer user-token' } },
+      baseConfig,
+      auth,
+    );
+    assert.equal(userRes.status, 403);
+    const userBody = userRes.body as { error: { code: string } };
+    assert.equal(userBody.error.code, 'FORBIDDEN');
+
+    const adminRes = handleRequest(
+      { method: 'GET', path: '/v1/admin/status', headers: { authorization: 'Bearer admin-token' } },
+      baseConfig,
+      auth,
+    );
+    assert.equal(adminRes.status, 200);
+    const adminBody = adminRes.body as { role: string; liveTradingEnabled: boolean };
+    assert.equal(adminBody.role, 'admin');
+    assert.equal(adminBody.liveTradingEnabled, false);
   });
 });

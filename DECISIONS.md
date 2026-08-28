@@ -96,3 +96,19 @@ Architecture and trading-safety rules require paper/live isolation and a kill sw
 
 Consequence:
 T011+ must keep using `resolveExecutionPath` / `assertExecutionAllowed` rather than calling a broker from a strategy or API handler.
+
+## ADR-008 — Bearer Sessions and RBAC
+
+Status: ACCEPTED
+
+Date: 2026-08-28
+
+Decision:
+Use opaque server-side session tokens (`Authorization: Bearer`) plus role-based permissions (`anonymous`, `user`, `admin`). Missing Authorization is anonymous. A present invalid token is 401. Passwords are stored as `scrypt` hashes only.
+
+Reason:
+T011 needs a testable auth gate before user profiles (T012) and before any order routes exist.
+
+Consequence:
+Do not put broker credentials or live-trading rights on a principal. Admin permission is operational, not a live-trading bypass. JWT libraries are deferred until a signed-token design is required.
+

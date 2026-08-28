@@ -18,6 +18,18 @@ export type GatewayResponse = {
   body: unknown;
 };
 
+export type GatewayPrincipal = {
+  id: string;
+  role: 'anonymous' | 'user' | 'admin';
+};
+
+export type GatewayPermission = 'public:read' | 'account:read' | 'admin:read';
+
+export type GatewayAuth = {
+  authenticate(authorizationHeader: string | undefined): GatewayPrincipal;
+  can(principal: GatewayPrincipal, permission: GatewayPermission): boolean;
+};
+
 function header(headers: Record<string, string | undefined> | undefined, name: string): string | undefined {
   if (!headers) {
     return undefined;
@@ -58,13 +70,88 @@ function json(
   };
 }
 
+function requiredPermission(method: string, path: string): GatewayPermission | undefined {
+  if (method === 'GET' && path === '/v1/me') {
+    return 'account:read';
+  }
+  if (method === 'GET' && path === '/v1/admin/status') {
+    return 'admin:read';
+  }
+  return undefined;
+}
+
+function authErrorBody(
+  err: unknown,
+  fallbackCode: string,
+  fallbackMessage: string,
+  fallbackStatus: number,
+): { status: number; code: string; message: string } {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'code' in err &&
+    'status' in err &&
+    'message' in err &&
+    typeof (err as { code: unknown }).code === 'string' &&
+    typeof (err as { status: unknown }).status === 'number' &&
+    typeof (err as { message: unknown }).message === 'string'
+  ) {
+    return {
+      status: (err as { status: number }).status,
+      code: (err as { code: string }).code,
+      message: (err as { message: string }).message,
+    };
+  }
+  return { status: fallbackStatus, code: fallbackCode, message: fallbackMessage };
+}
+
 /**
  * Minimal API kernel. No broker, market-data, or order routes.
+ * Protected routes require an injected GatewayAuth port.
  */
-export function handleRequest(req: GatewayRequest, config: GatewayConfig): GatewayResponse {
+export function handleRequest(
+  req: GatewayRequest,
+  config: GatewayConfig,
+  auth?: GatewayAuth,
+): GatewayResponse {
   const correlationId = correlationIdFrom(req);
   const method = req.method.toUpperCase();
   const path = req.path.split('?')[0] ?? req.path;
+  const permission = requiredPermission(method, path);
+
+  let principal: GatewayPrincipal = { id: 'anonymous', role: 'anonymous' };
+  if (permission) {
+    if (!auth) {
+      return json(
+        401,
+        {
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+        },
+        correlationId,
+      );
+    }
+    try {
+      principal = auth.authenticate(header(req.headers, 'authorization'));
+    } catch (err) {
+      const parsed = authErrorBody(err, 'UNAUTHORIZED', 'Authentication required', 401);
+      return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+    }
+    if (!auth.can(principal, permission)) {
+      return json(
+        403,
+        {
+          error: {
+            code: 'FORBIDDEN',
+            message: `Missing permission: ${permission}`,
+          },
+        },
+        correlationId,
+      );
+    }
+  }
 
   if (method === 'GET' && path === '/health') {
     return json(
@@ -100,6 +187,29 @@ export function handleRequest(req: GatewayRequest, config: GatewayConfig): Gatew
         liveTradingEnabled: config.liveTradingEnabled,
         killSwitchActive: config.killSwitchActive,
         paperIsolatedFromLive: true,
+      },
+      correlationId,
+    );
+  }
+
+  if (method === 'GET' && path === '/v1/me') {
+    return json(
+      200,
+      {
+        id: principal.id,
+        role: principal.role,
+      },
+      correlationId,
+    );
+  }
+
+  if (method === 'GET' && path === '/v1/admin/status') {
+    return json(
+      200,
+      {
+        service: config.serviceName,
+        role: principal.role,
+        liveTradingEnabled: config.liveTradingEnabled,
       },
       correlationId,
     );

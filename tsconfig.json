@@ -5,6 +5,7 @@
     { "path": "./packages/testing" },
     { "path": "./packages/contracts" },
     { "path": "./packages/config" },
-    { "path": "./packages/api-kernel" }
+    { "path": "./packages/api-kernel" },
+    { "path": "./packages/auth" }
   ]
 }
