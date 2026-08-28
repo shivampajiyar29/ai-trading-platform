@@ -428,3 +428,89 @@ T013
 
 COMMIT:
 cd696ae
+
+---
+
+## GROK-T013-01
+
+DATE_TIME: 2026-08-28T20:20:00+05:30
+TASK_ID: T013
+STATUS: DONE
+
+T012_VERIFICATION:
+Independent npm run validate: typecheck PASS, 59/59 PASS. Profile/settings ownership, anonymous 401, mass-assignment, live preference cannot enable live trading — confirmed.
+
+OBJECTIVE:
+Add a subscription/entitlement abstraction that cannot bypass risk, auth, compliance, or live-trading controls.
+
+WHAT_I_INSPECTED:
+- Control-plane files, architecture §4.4, T012 users package, API kernel routes.
+
+WHAT_I_CHANGED:
+- packages/entitlements: plans, catalog, EntitlementService, in-memory directory, unimplemented PaymentProvider.
+- API kernel: GET /v1/entitlements; PATCH/POST/PUT entitlements/subscription → 405 NOT_WRITABLE.
+- ADR-010, KI-007.
+
+FILES_CHANGED:
+- packages/entitlements/**
+- packages/api-kernel/src/handle-request.ts
+- packages/api-kernel/src/handle-request.test.ts
+- packages/api-kernel/src/index.ts
+- tsconfig.json
+- PROJECT_STATE.md, TASK_QUEUE.md, WORK_LOG.md, DECISIONS.md, KNOWN_ISSUES.md, README.md
+
+TESTS_RUN:
+- npm run validate
+
+TEST_RESULTS:
+- Typecheck PASS
+- 69/69 PASS
+
+SECURITY_CHECK:
+- No live-trading or bypass entitlements in catalog.
+- Client cannot PATCH plan/entitlements (405).
+- rejectClientPrivilegePatch blocks plan, entitlements, role, liveTradingEnabled.
+- GET uses principal.id only.
+
+PRIVILEGE_ESCALATION_TEST:
+- LIVE_TRADING_BYPASS lookup rejected as INVALID_INPUT.
+- FREE user lacks BACKTESTING.
+- User A token cannot receive User B entitlement payload (kernel scopes by principal).
+
+REGRESSION_CHECK:
+- Prior T005–T012 tests still pass.
+
+ARCHITECTURE_REVIEW:
+1. Subscription separate from auth: yes.
+2. Entitlement separate from role: yes.
+3. Authorization still RBAC on routes: yes.
+4. Risk not in entitlements: yes.
+5. Compliance/jurisdiction can deny available=false: yes.
+6. PaymentProvider boundary exists, unimplemented.
+7. Plans extensible via PLANS catalog.
+8. PERSONAL_AI_AGENT is a product entitlement only.
+9. Jurisdiction override supported in evaluateAccess.
+10. Risk engine remains outside this package.
+
+KNOWN_FAILURES:
+- None.
+
+KNOWN_LIMITATIONS:
+- In-memory subscriptions; MOCK internal assignment only (KI-007).
+- No billing, invoices, or plan expiry.
+
+IMPORTANT_DECISIONS:
+- ADR-010.
+
+DO_NOT_REPEAT:
+- Do not add LIVE_TRADING entitlements.
+- Do not treat assignPlanForTests as paid verification.
+
+RESUME_POINT:
+T014 — Observability foundation. Add structured logs/metrics/correlation without changing entitlement or execution-policy semantics.
+
+NEXT_TASK:
+T014
+
+COMMIT:
+(pending)

@@ -33,6 +33,10 @@ export type GatewayUsers = {
   updateSettings(userId: string, patch: unknown): unknown;
 };
 
+export type GatewayEntitlements = {
+  getEntitlements(userId: string): unknown;
+};
+
 export type GatewayAuth = {
   authenticate(authorizationHeader: string | undefined): GatewayPrincipal;
   can(principal: GatewayPrincipal, permission: GatewayPermission): boolean;
@@ -79,10 +83,19 @@ function json(
 }
 
 function requiredPermission(method: string, path: string): GatewayPermission | undefined {
-  if (method === 'GET' && (path === '/v1/me' || path === '/v1/profile' || path === '/v1/settings')) {
+  if (
+    method === 'GET' &&
+    (path === '/v1/me' || path === '/v1/profile' || path === '/v1/settings' || path === '/v1/entitlements')
+  ) {
     return 'account:read';
   }
   if (method === 'PATCH' && (path === '/v1/profile' || path === '/v1/settings')) {
+    return 'account:write';
+  }
+  if (
+    (method === 'PATCH' || method === 'POST' || method === 'PUT') &&
+    (path === '/v1/entitlements' || path === '/v1/subscription')
+  ) {
     return 'account:write';
   }
   if (method === 'GET' && path === '/v1/admin/status') {
@@ -125,6 +138,7 @@ export function handleRequest(
   config: GatewayConfig,
   auth?: GatewayAuth,
   users?: GatewayUsers,
+  entitlements?: GatewayEntitlements,
 ): GatewayResponse {
   const correlationId = correlationIdFrom(req);
   const method = req.method.toUpperCase();
@@ -251,6 +265,36 @@ export function handleRequest(
     } catch (err) {
       const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
       return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+    }
+  }
+
+  if (path === '/v1/entitlements' || path === '/v1/subscription') {
+    if (method === 'PATCH' || method === 'POST' || method === 'PUT') {
+      return json(
+        405,
+        {
+          error: {
+            code: 'NOT_WRITABLE',
+            message: 'Subscription and entitlements cannot be changed through this API',
+          },
+        },
+        correlationId,
+      );
+    }
+    if (method === 'GET' && path === '/v1/entitlements') {
+      if (!entitlements) {
+        return json(
+          500,
+          { error: { code: 'PERSISTENCE_FAILURE', message: 'Entitlement directory is not configured' } },
+          correlationId,
+        );
+      }
+      try {
+        return json(200, entitlements.getEntitlements(principal.id), correlationId);
+      } catch (err) {
+        const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
+        return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+      }
     }
   }
 

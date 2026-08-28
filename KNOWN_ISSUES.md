@@ -41,3 +41,10 @@ Status: OPEN
 Severity: INFO
 
 T012 profiles and settings persist only in `InMemoryUserDirectory`. Data is lost on process restart. Replace the directory implementation when a database is introduced; keep the `UserDirectory` interface.
+
+## KI-007 — Subscriptions Are In-Memory and Assignments Are MOCK
+
+Status: OPEN
+Severity: INFO
+
+T013 stores subscriptions in `InMemorySubscriptionDirectory`. `assignPlanForTests` is an internal MOCK path, not payment verification. No PaymentProvider is implemented.

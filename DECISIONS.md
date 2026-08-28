@@ -127,3 +127,18 @@ Identity secrets stay in auth. Persistence can change later without rewriting th
 Consequence:
 Do not add `liveTradingEnabled` to settings. Do not accept client `userId` for resource selection on `/v1/profile` or `/v1/settings`.
 
+## ADR-010 — Entitlements Are Product Capabilities, Not Safety Bypasses
+
+Status: ACCEPTED
+
+Date: 2026-08-28
+
+Decision:
+Subscription plans grant product entitlements only (market data, charts, paper trading, AI assistant, etc.). There is no LIVE_TRADING, RISK_BYPASS, or COMPLIANCE_BYPASS entitlement. Public APIs cannot change plan or entitlements. Jurisdiction can deny an entitled feature. Live trading remains gated by config flags, execution policy, risk, and compliance — not by plan.
+
+Reason:
+Architecture requires a centralized entitlement service that does not collapse into roles or risk controls.
+
+Consequence:
+Do not add live-trading rights to a plan. Do not expose plan assignment as a client write API until a verified PaymentProvider exists.
+

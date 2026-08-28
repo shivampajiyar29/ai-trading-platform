@@ -18,7 +18,7 @@ Only mark `DONE` with verification evidence.
 - [x] T010 — Application architecture implementation
 - [x] T011 — Authentication and authorization
 - [x] T012 — User/profile/settings
-- [ ] T013 — Subscription/entitlement abstraction
+- [x] T013 — Subscription/entitlement abstraction
 - [ ] T014 — Observability foundation
 - [ ] T015 — Security foundation
 

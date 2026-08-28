@@ -7,6 +7,7 @@
     { "path": "./packages/config" },
     { "path": "./packages/api-kernel" },
     { "path": "./packages/auth" },
-    { "path": "./packages/users" }
+    { "path": "./packages/users" },
+    { "path": "./packages/entitlements" }
   ]
 }

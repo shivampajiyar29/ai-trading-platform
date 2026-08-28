@@ -4,7 +4,7 @@ Modular AI-powered global trading platform.
 
 ## Status
 
-Control-plane through T012 (profile/settings) is in place. No live trading or broker integration.
+Control-plane through T013 (entitlements) is in place. No live trading or broker integration.
 
 See:
 
@@ -39,6 +39,7 @@ ai-trading-platform/
 │   ├── api-kernel/      # HTTP request kernel (health/ready + auth gates)
 │   ├── auth/            # RBAC, sessions, credential verification
 │   ├── users/           # Profile and settings (self-only)
+│   ├── entitlements/    # Plans and product capabilities
 │   └── testing/         # Shared test helpers
 ├── services/
 │   └── api-gateway/     # Skeleton pointer to api-kernel

@@ -195,5 +195,62 @@ describe('handleRequest', () => {
     assert.equal(bBody.userId, 'user-2');
     assert.equal(bBody.displayName, 'user-2');
   });
+
+  it('returns the current user entitlements and rejects subscription writes', () => {
+    const entitlements = {
+      getEntitlements(userId: string) {
+        return {
+          userId,
+          plan: userId === 'user-1' ? 'FREE' : 'PRO',
+          entitlements: userId === 'user-1' ? ['PAPER_TRADING'] : ['PAPER_TRADING', 'BACKTESTING'],
+          liveTradingGrantedBySubscription: false,
+        };
+      },
+    };
+
+    const anon = handleRequest({ method: 'GET', path: '/v1/entitlements' }, baseConfig, auth, undefined, entitlements);
+    assert.equal(anon.status, 401);
+
+    const self = handleRequest(
+      { method: 'GET', path: '/v1/entitlements', headers: { authorization: 'Bearer user-token' } },
+      baseConfig,
+      auth,
+      undefined,
+      entitlements,
+    );
+    assert.equal(self.status, 200);
+    const selfBody = self.body as { userId: string; plan: string; liveTradingGrantedBySubscription: boolean };
+    assert.equal(selfBody.userId, 'user-1');
+    assert.equal(selfBody.plan, 'FREE');
+    assert.equal(selfBody.liveTradingGrantedBySubscription, false);
+
+    const other = handleRequest(
+      { method: 'GET', path: '/v1/entitlements', headers: { authorization: 'Bearer user-b-token' } },
+      baseConfig,
+      auth,
+      undefined,
+      entitlements,
+    );
+    const otherBody = other.body as { userId: string; plan: string };
+    assert.equal(otherBody.userId, 'user-2');
+    assert.equal(otherBody.plan, 'PRO');
+
+    const write = handleRequest(
+      {
+        method: 'PATCH',
+        path: '/v1/entitlements',
+        headers: { authorization: 'Bearer user-token' },
+        body: { plan: 'ADVANCED', entitlements: ['LIVE_TRADING'] },
+      },
+      baseConfig,
+      auth,
+      undefined,
+      entitlements,
+    );
+    assert.equal(write.status, 405);
+    const writeBody = write.body as { error: { code: string } };
+    assert.equal(writeBody.error.code, 'NOT_WRITABLE');
+  });
 });
+
 
