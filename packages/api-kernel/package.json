@@ -1,0 +1,19 @@
+{
+  "name": "@ai-trading-platform/api-kernel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HTTP request kernel for the API gateway (no broker access)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}
