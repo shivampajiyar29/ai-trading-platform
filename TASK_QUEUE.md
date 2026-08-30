@@ -19,7 +19,7 @@ Only mark `DONE` with verification evidence.
 - [x] T011 — Authentication and authorization
 - [x] T012 — User/profile/settings
 - [x] T013 — Subscription/entitlement abstraction
-- [ ] T014 — Observability foundation
+- [x] T014 — Observability foundation
 - [ ] T015 — Security foundation
 
 ## Phase 2 — Market Data

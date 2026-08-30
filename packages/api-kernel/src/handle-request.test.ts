@@ -251,6 +251,46 @@ describe('handleRequest', () => {
     const writeBody = write.body as { error: { code: string } };
     assert.equal(writeBody.error.code, 'NOT_WRITABLE');
   });
+
+  it('records request telemetry without changing health behavior', () => {
+    const calls: Array<{ path: string; status: number; correlationId: string }> = [];
+    const telemetry = {
+      recordRequest(input: { path: string; status: number; correlationId: string }) {
+        calls.push(input);
+      },
+    };
+    const res = handleRequest(
+      { method: 'GET', path: '/health', headers: { 'x-correlation-id': 'obs-1' } },
+      baseConfig,
+      undefined,
+      undefined,
+      undefined,
+      telemetry,
+    );
+    assert.equal(res.status, 200);
+    assert.equal(res.headers['x-correlation-id'], 'obs-1');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0]?.path, '/health');
+    assert.equal(calls[0]?.status, 200);
+  });
+
+  it('exposes metrics only to admins', () => {
+    const userRes = handleRequest(
+      { method: 'GET', path: '/v1/admin/metrics', headers: { authorization: 'Bearer user-token' } },
+      baseConfig,
+      auth,
+    );
+    assert.equal(userRes.status, 403);
+    const adminRes = handleRequest(
+      { method: 'GET', path: '/v1/admin/metrics', headers: { authorization: 'Bearer admin-token' } },
+      baseConfig,
+      auth,
+    );
+    assert.equal(adminRes.status, 200);
+    const body = adminRes.body as { liveTradingEnabled: boolean; metrics: { counters: unknown[] } };
+    assert.equal(body.liveTradingEnabled, false);
+    assert.ok(Array.isArray(body.metrics.counters));
+  });
 });
 
 

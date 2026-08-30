@@ -40,6 +40,7 @@ ai-trading-platform/
 │   ├── auth/            # RBAC, sessions, credential verification
 │   ├── users/           # Profile and settings (self-only)
 │   ├── entitlements/    # Plans and product capabilities
+│   ├── observability/   # Logs, metrics, correlation IDs
 │   └── testing/         # Shared test helpers
 ├── services/
 │   └── api-gateway/     # Skeleton pointer to api-kernel

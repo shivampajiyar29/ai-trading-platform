@@ -514,3 +514,34 @@ T014
 
 COMMIT:
 d3faf9c
+
+---
+
+## GROK-T014-01
+
+DATE_TIME: 2026-08-30
+TASK_ID: T014
+STATUS: DONE
+
+OBJECTIVE:
+Add an observability foundation: structured logs, metrics, correlation IDs, and audit events without enabling live trading.
+
+WHAT_I_CHANGED:
+- packages/observability
+- API kernel optional GatewayTelemetry and GET /v1/admin/metrics
+- ADR-011, KI-008, control-plane docs
+
+TESTS_RUN:
+- npm test: 77/77 PASS
+- tsc --build: PASS
+
+DO_NOT_REPEAT:
+- Do not log Authorization headers or tokens.
+- Do not increment trading metrics as a way to enable live trading.
+
+RESUME_POINT:
+T015 — Security foundation.
+
+NEXT_TASK:
+T015
+

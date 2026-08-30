@@ -7,5 +7,6 @@ export type {
   GatewayPrincipal,
   GatewayRequest,
   GatewayResponse,
+  GatewayTelemetry,
   GatewayUsers,
 } from './handle-request.js';

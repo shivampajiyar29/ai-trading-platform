@@ -37,6 +37,21 @@ export type GatewayEntitlements = {
   getEntitlements(userId: string): unknown;
 };
 
+export type GatewayTelemetry = {
+  recordRequest(input: {
+    method: string;
+    path: string;
+    status: number;
+    durationMs: number;
+    correlationId: string;
+    principalId?: string;
+    principalRole?: string;
+  }): void;
+  metrics?: {
+    snapshot(): unknown;
+  };
+};
+
 export type GatewayAuth = {
   authenticate(authorizationHeader: string | undefined): GatewayPrincipal;
   can(principal: GatewayPrincipal, permission: GatewayPermission): boolean;
@@ -98,7 +113,7 @@ function requiredPermission(method: string, path: string): GatewayPermission | u
   ) {
     return 'account:write';
   }
-  if (method === 'GET' && path === '/v1/admin/status') {
+  if (method === 'GET' && (path === '/v1/admin/status' || path === '/v1/admin/metrics')) {
     return 'admin:read';
   }
   return undefined;
@@ -139,16 +154,30 @@ export function handleRequest(
   auth?: GatewayAuth,
   users?: GatewayUsers,
   entitlements?: GatewayEntitlements,
+  telemetry?: GatewayTelemetry,
 ): GatewayResponse {
+  const started = Date.now();
   const correlationId = correlationIdFrom(req);
   const method = req.method.toUpperCase();
   const path = req.path.split('?')[0] ?? req.path;
   const permission = requiredPermission(method, path);
 
   let principal: GatewayPrincipal = { id: 'anonymous', role: 'anonymous' };
+  const respond = (response: GatewayResponse): GatewayResponse => {
+    telemetry?.recordRequest({
+      method,
+      path,
+      status: response.status,
+      durationMs: Math.max(0, Date.now() - started),
+      correlationId,
+      principalId: principal.id,
+      principalRole: principal.role,
+    });
+    return response;
+  };
   if (permission) {
     if (!auth) {
-      return json(
+      return respond(json(
         401,
         {
           error: {
@@ -157,16 +186,16 @@ export function handleRequest(
           },
         },
         correlationId,
-      );
+      ));
     }
     try {
       principal = auth.authenticate(header(req.headers, 'authorization'));
     } catch (err) {
       const parsed = authErrorBody(err, 'UNAUTHORIZED', 'Authentication required', 401);
-      return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+      return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId));
     }
     if (principal.role === 'anonymous') {
-      return json(
+      return respond(json(
         401,
         {
           error: {
@@ -175,10 +204,10 @@ export function handleRequest(
           },
         },
         correlationId,
-      );
+      ));
     }
     if (!auth.can(principal, permission)) {
-      return json(
+      return respond(json(
         403,
         {
           error: {
@@ -187,12 +216,12 @@ export function handleRequest(
           },
         },
         correlationId,
-      );
+      ));
     }
   }
 
   if (method === 'GET' && path === '/health') {
-    return json(
+    return respond(json(
       200,
       {
         status: 'ok',
@@ -201,11 +230,11 @@ export function handleRequest(
         liveTradingEnabled: config.liveTradingEnabled,
       },
       correlationId,
-    );
+    ));
   }
 
   if (method === 'GET' && path === '/ready') {
-    return json(
+    return respond(json(
       200,
       {
         status: 'ok',
@@ -214,11 +243,11 @@ export function handleRequest(
         killSwitchActive: config.killSwitchActive,
       },
       correlationId,
-    );
+    ));
   }
 
   if (method === 'GET' && path === '/v1/execution/policy') {
-    return json(
+    return respond(json(
       200,
       {
         requestedMode: config.tradingMode,
@@ -227,50 +256,50 @@ export function handleRequest(
         paperIsolatedFromLive: true,
       },
       correlationId,
-    );
+    ));
   }
 
   if (method === 'GET' && path === '/v1/me') {
-    return json(
+    return respond(json(
       200,
       {
         id: principal.id,
         role: principal.role,
       },
       correlationId,
-    );
+    ));
   }
 
   if (path === '/v1/profile' || path === '/v1/settings') {
     if (!users) {
-      return json(
+      return respond(json(
         500,
         { error: { code: 'PERSISTENCE_FAILURE', message: 'User directory is not configured' } },
         correlationId,
-      );
+      ));
     }
     try {
       if (method === 'GET' && path === '/v1/profile') {
-        return json(200, users.getProfile(principal.id), correlationId);
+        return respond(json(200, users.getProfile(principal.id), correlationId));
       }
       if (method === 'PATCH' && path === '/v1/profile') {
-        return json(200, users.updateProfile(principal.id, req.body), correlationId);
+        return respond(json(200, users.updateProfile(principal.id, req.body), correlationId));
       }
       if (method === 'GET' && path === '/v1/settings') {
-        return json(200, users.getSettings(principal.id), correlationId);
+        return respond(json(200, users.getSettings(principal.id), correlationId));
       }
       if (method === 'PATCH' && path === '/v1/settings') {
-        return json(200, users.updateSettings(principal.id, req.body), correlationId);
+        return respond(json(200, users.updateSettings(principal.id, req.body), correlationId));
       }
     } catch (err) {
       const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
-      return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+      return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId));
     }
   }
 
   if (path === '/v1/entitlements' || path === '/v1/subscription') {
     if (method === 'PATCH' || method === 'POST' || method === 'PUT') {
-      return json(
+      return respond(json(
         405,
         {
           error: {
@@ -279,27 +308,27 @@ export function handleRequest(
           },
         },
         correlationId,
-      );
+      ));
     }
     if (method === 'GET' && path === '/v1/entitlements') {
       if (!entitlements) {
-        return json(
+        return respond(json(
           500,
           { error: { code: 'PERSISTENCE_FAILURE', message: 'Entitlement directory is not configured' } },
           correlationId,
-        );
+        ));
       }
       try {
-        return json(200, entitlements.getEntitlements(principal.id), correlationId);
+        return respond(json(200, entitlements.getEntitlements(principal.id), correlationId));
       } catch (err) {
         const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
-        return json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId);
+        return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId));
       }
     }
   }
 
   if (method === 'GET' && path === '/v1/admin/status') {
-    return json(
+    return respond(json(
       200,
       {
         service: config.serviceName,
@@ -307,10 +336,22 @@ export function handleRequest(
         liveTradingEnabled: config.liveTradingEnabled,
       },
       correlationId,
-    );
+    ));
   }
 
-  return json(
+  if (method === 'GET' && path === '/v1/admin/metrics') {
+    return respond(json(
+      200,
+      {
+        service: config.serviceName,
+        liveTradingEnabled: config.liveTradingEnabled,
+        metrics: telemetry?.metrics?.snapshot() ?? { counters: [], histograms: [] },
+      },
+      correlationId,
+    ));
+  }
+
+  return respond(json(
     404,
     {
       error: {
@@ -319,5 +360,5 @@ export function handleRequest(
       },
     },
     correlationId,
-  );
+  ));
 }

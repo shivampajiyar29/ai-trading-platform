@@ -48,3 +48,10 @@ Status: OPEN
 Severity: INFO
 
 T013 stores subscriptions in `InMemorySubscriptionDirectory`. `assignPlanForTests` is an internal MOCK path, not payment verification. No PaymentProvider is implemented.
+
+## KI-008 — Observability Is In-Process Only
+
+Status: OPEN
+Severity: INFO
+
+T014 metrics, traces, and logs stay in memory. There is no log shipper, Prometheus exporter, or distributed tracer. Replace sinks later; keep the `PlatformTelemetry` / `GatewayTelemetry` shapes.

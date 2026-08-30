@@ -142,3 +142,18 @@ Architecture requires a centralized entitlement service that does not collapse i
 Consequence:
 Do not add live-trading rights to a plan. Do not expose plan assignment as a client write API until a verified PaymentProvider exists.
 
+## ADR-011 — Observability Must Not Leak Secrets or Enable Trading
+
+Status: ACCEPTED
+
+Date: 2026-08-30
+
+Decision:
+T014 adds `packages/observability` for structured logs, in-memory metrics, lightweight spans, correlation IDs, and audit events. The API kernel may record request telemetry through an optional port. Logs redact tokens, passwords, and Authorization headers. Trading metric names are reserved only; recording them does not enable live trading or broker calls.
+
+Reason:
+Architecture §12 requires logs, metrics, and correlation IDs before later health/repair work.
+
+Consequence:
+Do not log raw Bearer tokens. Do not treat metrics as a live-trading control plane. Do not add a vendor APM dependency in this foundation slice.
+
