@@ -291,6 +291,20 @@ describe('handleRequest', () => {
     assert.equal(body.liveTradingEnabled, false);
     assert.ok(Array.isArray(body.metrics.counters));
   });
+
+  it('falls back to x-request-id and rejects unsafe correlation ids', () => {
+    const fromRequestId = handleRequest(
+      { method: 'GET', path: '/health', headers: { 'x-request-id': 'req-77' } },
+      baseConfig,
+    );
+    assert.equal(fromRequestId.headers['x-correlation-id'], 'req-77');
+    const unsafe = handleRequest(
+      { method: 'GET', path: '/health', headers: { 'x-correlation-id': 'bad\nid' } },
+      baseConfig,
+    );
+    assert.notEqual(unsafe.headers['x-correlation-id'], 'bad\nid');
+    assert.ok(unsafe.headers['x-correlation-id']);
+  });
 });
 
 

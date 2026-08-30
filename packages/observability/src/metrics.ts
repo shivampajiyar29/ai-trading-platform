@@ -49,6 +49,19 @@ export class InMemoryMetrics {
     { name: string; labels: MetricLabels; count: number; sum: number; min: number; max: number }
   >();
 
+  counter(name: string, labels: MetricLabels = {}, amount = 1): void {
+    this.increment(name, labels, amount);
+  }
+
+  gauge(name: string, value: number, labels: MetricLabels = {}): void {
+    const key = `${name}|${labelKey(labels)}`;
+    this.counters.set(key, { name, labels: { ...labels }, value });
+  }
+
+  histogram(name: string, value: number, labels: MetricLabels = {}): void {
+    this.observe(name, value, labels);
+  }
+
   increment(name: string, labels: MetricLabels = {}, amount = 1): void {
     const key = `${name}|${labelKey(labels)}`;
     const existing = this.counters.get(key);

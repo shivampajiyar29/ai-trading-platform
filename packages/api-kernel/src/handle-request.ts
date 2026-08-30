@@ -74,12 +74,28 @@ function header(headers: Record<string, string | undefined> | undefined, name: s
   return undefined;
 }
 
-function correlationIdFrom(req: GatewayRequest): string {
-  const incoming = header(req.headers, 'x-correlation-id')?.trim();
-  if (incoming) {
-    return incoming;
+function isSafeCorrelationId(value: string): boolean {
+  return value.length > 0 && value.length <= 128 && !/[\r\n\0<>]/.test(value);
+}
+
+function newCorrelationId(): string {
+  const cryptoRef = (globalThis as unknown as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (cryptoRef?.randomUUID) {
+    return cryptoRef.randomUUID();
   }
   return `corr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function correlationIdFrom(req: GatewayRequest): string {
+  const incoming = header(req.headers, 'x-correlation-id')?.trim();
+  if (incoming && isSafeCorrelationId(incoming)) {
+    return incoming;
+  }
+  const requestId = header(req.headers, 'x-request-id')?.trim();
+  if (requestId && isSafeCorrelationId(requestId)) {
+    return requestId;
+  }
+  return newCorrelationId();
 }
 
 function json(

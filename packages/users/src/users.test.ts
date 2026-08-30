@@ -87,3 +87,22 @@ describe('ownership', () => {
     assert.throws(() => requireOwnedUserId('anonymous', undefined), /not found/);
   });
 });
+
+describe('user audit hooks', () => {
+  it('logs profile and settings field names only', () => {
+    const events: Array<{ type: string; details: Record<string, unknown> }> = [];
+    const audit = {
+      record(type: string, _actorId: string, _outcome: 'success' | 'denied' | 'failure', details: Record<string, unknown> = {}) {
+        events.push({ type, details });
+      },
+    };
+    const service = new UserService(new InMemoryUserDirectory(), () => 't', audit);
+    service.updateProfile('user-a', { displayName: 'Ada' });
+    service.updateSettings('user-a', { theme: 'dark' });
+    assert.equal(events[0]?.type, 'PROFILE_UPDATED');
+    assert.deepEqual(events[0]?.details.fields, ['displayName']);
+    assert.equal(events[1]?.type, 'SETTINGS_UPDATED');
+    assert.equal(JSON.stringify(events).includes('Ada'), false);
+  });
+});
+

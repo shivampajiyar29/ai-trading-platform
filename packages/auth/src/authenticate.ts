@@ -2,6 +2,7 @@ import { ANONYMOUS_PRINCIPAL, type Principal } from './principal.js';
 import { unauthorized } from './errors.js';
 import type { SessionStore } from './sessions.js';
 import { requireSession } from './sessions.js';
+import type { SecurityAudit } from './security-audit.js';
 
 export function parseBearerToken(authorizationHeader: string | undefined): string | undefined {
   if (!authorizationHeader) {
@@ -25,10 +26,18 @@ export function parseBearerToken(authorizationHeader: string | undefined): strin
 export function authenticate(
   authorizationHeader: string | undefined,
   sessions: SessionStore,
+  audit?: SecurityAudit,
 ): Principal {
-  const token = parseBearerToken(authorizationHeader);
-  if (!token) {
-    return ANONYMOUS_PRINCIPAL;
+  try {
+    const token = parseBearerToken(authorizationHeader);
+    if (!token) {
+      return ANONYMOUS_PRINCIPAL;
+    }
+    const principal = requireSession(sessions, token).principal;
+    audit?.record('AUTH_SUCCESS', principal.id, 'success', { role: principal.role });
+    return principal;
+  } catch (err) {
+    audit?.record('AUTH_FAILURE', 'anonymous', 'failure', { reason: 'invalid_or_expired_session' });
+    throw err;
   }
-  return requireSession(sessions, token).principal;
 }

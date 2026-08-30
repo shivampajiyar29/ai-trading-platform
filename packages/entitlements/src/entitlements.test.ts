@@ -101,3 +101,20 @@ describe('ownership and mass assignment', () => {
     assert.throws(() => rejectClientPrivilegePatch({ liveTradingEnabled: true }), /not writable/);
   });
 });
+
+describe('entitlement audit hooks', () => {
+  it('records mock plan assignment without live-trading authority', () => {
+    const events: Array<{ type: string; details: Record<string, unknown> }> = [];
+    const audit = {
+      record(type: string, _actorId: string, _outcome: 'success' | 'denied' | 'failure', details: Record<string, unknown> = {}) {
+        events.push({ type, details });
+      },
+    };
+    const service = new EntitlementService(new InMemorySubscriptionDirectory(), () => 't', audit);
+    const view = service.assignPlanForTests('user-a', 'PRO');
+    assert.equal(view.liveTradingGrantedBySubscription, false);
+    assert.equal(events.some((event) => event.type === 'SUBSCRIPTION_ASSIGNED'), true);
+    assert.equal(events.some((event) => event.type === 'ENTITLEMENT_CHANGED'), true);
+  });
+});
+

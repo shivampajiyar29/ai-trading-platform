@@ -1,6 +1,6 @@
 import { redactValue } from './redact.js';
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'debug' | 'info' | 'warn' | 'error';
 
 export type LogRecord = {
   timestamp: string;
@@ -13,12 +13,24 @@ export type LogRecord = {
 
 export type LogSink = (record: LogRecord) => void;
 
-const LEVEL_RANK: Record<LogLevel, number> = {
+const LEVEL_RANK: Record<string, number> = {
   debug: 10,
   info: 20,
   warn: 30,
   error: 40,
+  DEBUG: 10,
+  INFO: 20,
+  WARN: 30,
+  ERROR: 40,
 };
+
+export function normalizeLogLevel(level: string): 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' {
+  const upper = level.toUpperCase();
+  if (upper === 'DEBUG' || upper === 'INFO' || upper === 'WARN' || upper === 'ERROR') {
+    return upper;
+  }
+  return 'INFO';
+}
 
 export class StructuredLogger {
   readonly records: LogRecord[] = [];
@@ -35,12 +47,12 @@ export class StructuredLogger {
   }
 
   log(level: LogLevel, message: string, fields: Record<string, unknown> = {}, correlationId?: string): void {
-    if (LEVEL_RANK[level] < LEVEL_RANK[this.minLevel]) {
+    if ((LEVEL_RANK[level] ?? 20) < (LEVEL_RANK[this.minLevel] ?? 20)) {
       return;
     }
     const record: LogRecord = {
       timestamp: this.now(),
-      level,
+      level: normalizeLogLevel(level),
       message,
       service: this.service,
       fields: redactValue(fields) as Record<string, unknown>,

@@ -14,3 +14,4 @@ export { permissionsFor, PERMISSIONS, roleHasPermission, ROLES } from './roles.j
 export type { Permission, Role } from './roles.js';
 export { InMemorySessionStore, requireSession } from './sessions.js';
 export type { Session, SessionStore } from './sessions.js';
+export type { SecurityAudit } from './security-audit.js';

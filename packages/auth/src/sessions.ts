@@ -1,6 +1,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { unauthorized } from './errors.js';
 import type { Principal } from './principal.js';
+import type { SecurityAudit } from './security-audit.js';
 
 export type Session = {
   token: string;
@@ -19,6 +20,8 @@ const DEFAULT_TTL_MS = 60 * 60 * 1000;
 export class InMemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, Session>();
 
+  constructor(private readonly audit?: SecurityAudit) {}
+
   issue(principal: Principal, ttlMs = DEFAULT_TTL_MS): Session {
     const token = `sess_${randomBytes(24).toString('hex')}`;
     const session: Session = {
@@ -27,6 +30,7 @@ export class InMemorySessionStore implements SessionStore {
       expiresAt: Date.now() + ttlMs,
     };
     this.sessions.set(token, session);
+    this.audit?.record('SESSION_CREATED', principal.id, 'success', { role: principal.role });
     return session;
   }
 
@@ -46,6 +50,7 @@ export class InMemorySessionStore implements SessionStore {
     const session = this.lookup(token);
     if (session) {
       this.sessions.delete(session.token);
+      this.audit?.record('SESSION_REVOKED', session.principal.id, 'success', { role: session.principal.role });
     }
   }
 

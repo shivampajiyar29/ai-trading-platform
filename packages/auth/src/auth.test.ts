@@ -92,3 +92,29 @@ describe('sessions and bearer auth', () => {
     assert.equal(sessions.find(live.token), undefined);
   });
 });
+
+describe('auth audit hooks', () => {
+  it('records success, failure, session, and denial without tokens', () => {
+    const events: Array<{ type: string; details: Record<string, unknown> }> = [];
+    const audit = {
+      record(type: string, _actorId: string, _outcome: 'success' | 'denied' | 'failure', details: Record<string, unknown> = {}) {
+        events.push({ type, details });
+      },
+    };
+    const sessions = new InMemorySessionStore(audit);
+    const issued = sessions.issue(principalFor('user-1', 'user'));
+    authenticate(`Bearer ${issued.token}`, sessions, audit);
+    assert.throws(() => authenticate('Bearer sess_deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef', sessions, audit));
+    authorize(principalFor('user-1', 'user'), 'account:read', audit);
+    assert.throws(() => authorize(principalFor('user-1', 'user'), 'admin:read', audit));
+    sessions.revoke(issued.token);
+    const types = events.map((event) => event.type);
+    assert.equal(types.includes('SESSION_CREATED'), true);
+    assert.equal(types.includes('AUTH_SUCCESS'), true);
+    assert.equal(types.includes('AUTH_FAILURE'), true);
+    assert.equal(types.includes('AUTHORIZATION_DENIED'), true);
+    assert.equal(types.includes('SESSION_REVOKED'), true);
+    assert.equal(JSON.stringify(events).includes(issued.token), false);
+  });
+});
+

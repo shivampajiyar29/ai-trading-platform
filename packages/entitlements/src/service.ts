@@ -11,6 +11,10 @@ import type { AssignmentSource, SubscriptionDirectory, SubscriptionRecord } from
 
 export type Clock = () => string;
 
+export type EntitlementAudit = {
+  record(type: string, actorId: string, outcome: 'success' | 'denied' | 'failure', details?: Record<string, unknown>): void;
+};
+
 export type EntitlementView = {
   userId: string;
   plan: PlanId;
@@ -41,6 +45,7 @@ export class EntitlementService {
   constructor(
     private readonly directory: SubscriptionDirectory,
     private readonly now: Clock = () => new Date().toISOString(),
+    private readonly audit?: EntitlementAudit,
   ) {}
 
   getSubscription(userId: string): SubscriptionRecord {
@@ -85,6 +90,8 @@ export class EntitlementService {
       source: 'internal_assignment',
       assignedAt: this.now(),
     });
+    this.audit?.record('SUBSCRIPTION_ASSIGNED', id, 'success', { plan: parsed, source: 'internal_assignment' });
+    this.audit?.record('ENTITLEMENT_CHANGED', id, 'success', { plan: parsed });
     return toView(record);
   }
 

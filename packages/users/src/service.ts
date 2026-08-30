@@ -16,10 +16,15 @@ import {
 
 export type Clock = () => string;
 
+export type UserAudit = {
+  record(type: string, actorId: string, outcome: 'success' | 'denied' | 'failure', details?: Record<string, unknown>): void;
+};
+
 export class UserService {
   constructor(
     private readonly directory: UserDirectory,
     private readonly now: Clock = () => new Date().toISOString(),
+    private readonly audit?: UserAudit,
   ) {}
 
   getProfile(userId: string): UserProfile {
@@ -32,8 +37,11 @@ export class UserService {
 
   updateProfile(userId: string, patch: unknown): UserProfile {
     const current = this.getProfile(userId);
-    const next = applyProfilePatch(current, parseProfilePatch(patch), this.now());
-    return toProfileView(this.directory.saveProfile(next));
+    const parsed = parseProfilePatch(patch);
+    const next = applyProfilePatch(current, parsed, this.now());
+    const saved = toProfileView(this.directory.saveProfile(next));
+    this.audit?.record('PROFILE_UPDATED', userId, 'success', { fields: Object.keys(parsed) });
+    return saved;
   }
 
   getSettings(userId: string): ReturnType<typeof toSettingsView> {
@@ -46,8 +54,11 @@ export class UserService {
 
   updateSettings(userId: string, patch: unknown): ReturnType<typeof toSettingsView> {
     const current = this.getSettings(userId);
-    const next = applySettingsPatch(current, parseSettingsPatch(patch), this.now());
-    return toSettingsView(this.directory.saveSettings(next));
+    const parsed = parseSettingsPatch(patch);
+    const next = applySettingsPatch(current, parsed, this.now());
+    const saved = toSettingsView(this.directory.saveSettings(next));
+    this.audit?.record('SETTINGS_UPDATED', userId, 'success', { fields: Object.keys(parsed) });
+    return saved;
   }
 }
 
