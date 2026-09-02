@@ -18,4 +18,5 @@ export {
   type RealtimeSubscription,
   type RealtimeSubscriptionRequest,
 } from './realtime.js';
+export { normalizeCandle, normalizeCandles, normalizeQuote } from './normalization.js';
 export { validateCandle, validateInterval, validateQuote, validateRange } from './validation.js';
