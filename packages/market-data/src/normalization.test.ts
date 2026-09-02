@@ -19,7 +19,7 @@ test('validation requires a usable quote price', () => {
 
 test('candle normalization is deterministic and deduplicates timestamps', () => {
   const first = normalizeCandle({ instrumentId: id, timestamp: new Date(2), open: 2, high: 3, low: 1, close: 2, volume: 4 });
-  const duplicate = { ...first, close: 99 };
+  const duplicate = { ...first, close: 2.5, high: 3 };
   const earlier = normalizeCandle({ instrumentId: id, timestamp: new Date(1), open: 1, high: 2, low: 0, close: 1, volume: 3 });
   const result = normalizeCandles([first, duplicate, earlier]);
   assert.deepEqual(result.map((candle) => candle.timestamp.getTime()), [1, 2]);
