@@ -1,41 +1,39 @@
 # AI Trading Platform — Project State
 
 ## Current Status
-STATUS: HISTORICAL_MARKET_DATA_PIPELINE_VERIFIED
+STATUS: REALTIME_MARKET_DATA_PIPELINE_VERIFIED
 
 Repository: `shivampajiyar29/ai-trading-platform`
-Verified baseline before T020: `agent/T015-security-foundation` @ `e4a6683`
-Working branch: `agent/T020-market-data-foundation`
+Verified baseline before T022: `agent/T020-market-data-foundation` @ `585328d`
+Working branch: `agent/T022-realtime-market-data`
 
 ## Verified Work
 - T005–T015 foundation slices are in place.
-- T020 Market Data Foundation is implemented and persisted on the T020 branch.
+- T020 Market Data Foundation is implemented and persisted.
 - T021 Historical Data Pipeline is implemented and verified by GitHub Actions.
+- T022 Realtime Market Data Pipeline is implemented and verified by GitHub Actions.
 - Live trading remains disabled by default; no broker, payment, or order execution route was added.
 
-## T020 Market Data Foundation
-- Added `@ai-trading-platform/market-data` as a provider-neutral package.
-- Defined normalized `Quote`, `Candle`, `InstrumentMetadata`, range, interval, and provider capability types.
-- Added the `MarketDataProvider` interface for quotes, candles, and instrument lookup.
-- Added typed provider errors and a provider registry for replaceable adapters.
-- Added validation for date ranges, intervals, quotes, and OHLCV candles.
+## T020/T021 Market Data Foundation
+- Provider-neutral normalized market-data types, provider registry, validation, historical chunking, normalization, sorting, deduplication, and optional persistence sink are present.
 
-## T021 Historical Data Pipeline
-- Added `HistoricalDataPipeline` without coupling providers to a database or vendor SDK.
-- Added bounded range chunking based on interval and configurable maximum candles per request.
-- Enforced provider historical/candle capability and supported-interval checks before ingestion.
-- Validated every provider candle and enforced requested-instrument consistency.
-- Deterministically sorted candles by timestamp and removed duplicate instrument/timestamp records.
-- Added an optional persistence sink for future storage integration.
-- Added tests for ordering/deduplication, unsupported providers, and malformed candles.
+## T022 Realtime Market Data Pipeline
+- Added a provider-neutral realtime event model for quotes and candles.
+- Added subscription requests with instrument and optional interval filters.
+- Providers own transport details such as WebSocket/SSE/vendor SDK integration; the platform package remains vendor-neutral.
+- Added realtime provider capability checks and subscription lifecycle management.
+- Validated every incoming quote/candle before delivery.
+- Enforced per-subscription instrument filtering so independent subscriptions do not overwrite each other's filters.
+- Added bounded buffering with explicit overflow reporting to prevent unbounded memory growth.
+- Added close/closeAll lifecycle handling and tests for filtering, invalid providers, malformed events, and buffering.
 
 ## Current Checkpoint
-CHECKPOINT_ID: FOUNDATION-021
+CHECKPOINT_ID: FOUNDATION-022
 STATUS: VERIFIED
-IMPLEMENTATION_HEAD: `e17c17f8023cb72d0bb549f28b9c0d706a2ca436`
-CI_RUN: `33664836940` — PASS
-CI_JOB: `100363899583` — PASS
+IMPLEMENTATION_HEAD: `9b399a9a8911a43241fc2cc301619330b1fe884b`
+CI_RUN: `33665207173` — PASS
+CI_JOB: `100365124861` — PASS
 
 ## Resume Point
-T021 is complete. The next implementation task is T022 — Real-time/WebSocket pipeline. Preserve the provider boundary and security foundation. Do not enable live trading.
+T022 is complete. The next implementation task is T023 — Data normalization and validation. Preserve the provider boundary and security foundation. Do not enable live trading.
 Independent final security audit remains a later T901 quality gate.
