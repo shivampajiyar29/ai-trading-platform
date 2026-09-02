@@ -5,7 +5,6 @@ Status values: `TODO`, `IN_PROGRESS`, `DONE`, `PARTIAL`, `BLOCKED`, `SKIPPED`
 Only mark `DONE` with verification evidence.
 
 ## Phase 0 — Control Plane
-
 - [x] T000 — Create multi-agent handoff protocol
 - [x] T001 — Create persistent project state
 - [x] T002 — Create task queue
@@ -14,16 +13,14 @@ Only mark `DONE` with verification evidence.
 - [x] T005 — Baseline test/tooling setup
 
 ## Phase 1 — Foundation
-
 - [x] T010 — Application architecture implementation
 - [x] T011 — Authentication and authorization
 - [x] T012 — User/profile/settings
 - [x] T013 — Subscription/entitlement abstraction
 - [x] T014 — Observability foundation
-- [ ] T015 — Security foundation
+- [x] T015 — Security foundation
 
 ## Phase 2 — Market Data
-
 - [ ] T020 — Market-data provider interface
 - [ ] T021 — Historical data pipeline
 - [ ] T022 — Real-time/WebSocket pipeline
@@ -31,7 +28,6 @@ Only mark `DONE` with verification evidence.
 - [ ] T024 — Market/session/timezone support
 
 ## Phase 3 — Charts and Markets
-
 - [ ] T030 — Professional 2D charting
 - [ ] T031 — Indicators/drawing tools
 - [ ] T032 — Multi-timeframe support
@@ -40,7 +36,6 @@ Only mark `DONE` with verification evidence.
 - [ ] T035 — Advanced/3D visualization
 
 ## Phase 4 — Strategy and Backtesting
-
 - [ ] T040 — Strategy domain model
 - [ ] T041 — Strategy builder
 - [ ] T042 — Pine Script integration/conversion layer
@@ -49,7 +44,6 @@ Only mark `DONE` with verification evidence.
 - [ ] T045 — Backtest analytics and reports
 
 ## Phase 5 — Trading
-
 - [ ] T050 — Portfolio service
 - [ ] T051 — Risk engine
 - [ ] T052 — Paper trading
@@ -60,7 +54,6 @@ Only mark `DONE` with verification evidence.
 - [ ] T057 — Execution performance/latency instrumentation
 
 ## Phase 6 — AI/ML
-
 - [ ] T060 — AI provider abstraction
 - [ ] T061 — AI market analyst
 - [ ] T062 — AI chart explanation
@@ -72,34 +65,29 @@ Only mark `DONE` with verification evidence.
 - [ ] T068 — Personal AI agent
 
 ## Phase 7 — Platform Intelligence
-
 - [ ] T070 — System health agent
 - [ ] T071 — Controlled autonomous repair pipeline
 - [ ] T072 — Alerting/incident management
 - [ ] T073 — Admin/operations dashboard
 
 ## Phase 8 — Learning and Community
-
 - [ ] T080 — Learning center
 - [ ] T081 — Quiz system
 - [ ] T082 — Paper-trading competitions
 - [ ] T083 — Strategy/model sharing
 
 ## Phase 9 — Globalization
-
 - [ ] T090 — Localization/i18n
 - [ ] T091 — Multi-currency/timezone support
 - [ ] T092 — Jurisdiction capability framework
 - [ ] T093 — Regional broker/market availability
 
 ## Phase 10 — Future Modules
-
 - [ ] T100 — Future platform-token abstraction
 - [ ] T101 — Regulated lottery/reward module evaluation
 - [ ] T102 — Additional markets/providers/brokers
 
 ## Final Quality Gates
-
 - [ ] T900 — Full regression suite
 - [ ] T901 — Independent security audit
 - [ ] T902 — Independent architecture audit
@@ -112,4 +100,4 @@ Only mark `DONE` with verification evidence.
 Agents may split a task into subtasks, but must update this file before handing off if task status changes.
 
 ## Current Execution Rule
-The repository is still at architecture/control-plane stage. Do not skip directly to live trading, real-money competitions, lottery/gambling, or token functionality. Follow dependency order and verify each milestone before advancing.
+Follow dependency order. Do not skip directly to live trading, real-money competitions, lottery/gambling, or token functionality. Live trading remains disabled by default until later verified gates.

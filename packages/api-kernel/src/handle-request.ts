@@ -1,3 +1,11 @@
+import {
+  applySecurityHeaders,
+  rateLimitHeaders,
+  validateBodySize,
+  validateSafeJson,
+  type RateLimiter,
+} from '@ai-trading-platform/security';
+
 export type GatewayConfig = {
   serviceName: string;
   version: string;
@@ -47,9 +55,7 @@ export type GatewayTelemetry = {
     principalId?: string;
     principalRole?: string;
   }): void;
-  metrics?: {
-    snapshot(): unknown;
-  };
+  metrics?: { snapshot(): unknown };
 };
 
 export type GatewayAuth = {
@@ -57,19 +63,18 @@ export type GatewayAuth = {
   can(principal: GatewayPrincipal, permission: GatewayPermission): boolean;
 };
 
+export type GatewaySecurity = {
+  rateLimiter?: RateLimiter;
+  maxBodyBytes?: number;
+};
+
 function header(headers: Record<string, string | undefined> | undefined, name: string): string | undefined {
-  if (!headers) {
-    return undefined;
-  }
+  if (!headers) return undefined;
   const direct = headers[name];
-  if (direct !== undefined) {
-    return direct;
-  }
+  if (direct !== undefined) return direct;
   const lower = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {
-    if (key.toLowerCase() === lower) {
-      return value;
-    }
+    if (key.toLowerCase() === lower) return value;
   }
   return undefined;
 }
@@ -80,90 +85,48 @@ function isSafeCorrelationId(value: string): boolean {
 
 function newCorrelationId(): string {
   const cryptoRef = (globalThis as unknown as { crypto?: { randomUUID?: () => string } }).crypto;
-  if (cryptoRef?.randomUUID) {
-    return cryptoRef.randomUUID();
-  }
+  if (cryptoRef?.randomUUID) return cryptoRef.randomUUID();
   return `corr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function correlationIdFrom(req: GatewayRequest): string {
   const incoming = header(req.headers, 'x-correlation-id')?.trim();
-  if (incoming && isSafeCorrelationId(incoming)) {
-    return incoming;
-  }
+  if (incoming && isSafeCorrelationId(incoming)) return incoming;
   const requestId = header(req.headers, 'x-request-id')?.trim();
-  if (requestId && isSafeCorrelationId(requestId)) {
-    return requestId;
-  }
+  if (requestId && isSafeCorrelationId(requestId)) return requestId;
   return newCorrelationId();
 }
 
-function json(
-  status: number,
-  body: unknown,
-  correlationId: string,
-): GatewayResponse {
+function json(status: number, body: unknown, correlationId: string, extraHeaders: Record<string, string> = {}): GatewayResponse {
   return {
     status,
-    headers: {
-      'content-type': 'application/json',
-      'x-correlation-id': correlationId,
-    },
+    headers: applySecurityHeaders({ 'content-type': 'application/json', 'x-correlation-id': correlationId, ...extraHeaders }),
     body,
   };
 }
 
 function requiredPermission(method: string, path: string): GatewayPermission | undefined {
-  if (
-    method === 'GET' &&
-    (path === '/v1/me' || path === '/v1/profile' || path === '/v1/settings' || path === '/v1/entitlements')
-  ) {
-    return 'account:read';
-  }
-  if (method === 'PATCH' && (path === '/v1/profile' || path === '/v1/settings')) {
-    return 'account:write';
-  }
-  if (
-    (method === 'PATCH' || method === 'POST' || method === 'PUT') &&
-    (path === '/v1/entitlements' || path === '/v1/subscription')
-  ) {
-    return 'account:write';
-  }
-  if (method === 'GET' && (path === '/v1/admin/status' || path === '/v1/admin/metrics')) {
-    return 'admin:read';
-  }
+  if (method === 'GET' && (path === '/v1/me' || path === '/v1/profile' || path === '/v1/settings' || path === '/v1/entitlements')) return 'account:read';
+  if (method === 'PATCH' && (path === '/v1/profile' || path === '/v1/settings')) return 'account:write';
+  if ((method === 'PATCH' || method === 'POST' || method === 'PUT') && (path === '/v1/entitlements' || path === '/v1/subscription')) return 'account:write';
+  if (method === 'GET' && (path === '/v1/admin/status' || path === '/v1/admin/metrics')) return 'admin:read';
   return undefined;
 }
 
-function authErrorBody(
-  err: unknown,
-  fallbackCode: string,
-  fallbackMessage: string,
-  fallbackStatus: number,
-): { status: number; code: string; message: string } {
-  if (
-    err &&
-    typeof err === 'object' &&
-    'code' in err &&
-    'status' in err &&
-    'message' in err &&
-    typeof (err as { code: unknown }).code === 'string' &&
-    typeof (err as { status: unknown }).status === 'number' &&
-    typeof (err as { message: unknown }).message === 'string'
-  ) {
-    return {
-      status: (err as { status: number }).status,
-      code: (err as { code: string }).code,
-      message: (err as { message: string }).message,
-    };
+function authErrorBody(err: unknown, fallbackCode: string, fallbackMessage: string, fallbackStatus: number): { status: number; code: string; message: string } {
+  if (err && typeof err === 'object' && 'code' in err && 'status' in err && 'message' in err && typeof (err as { code: unknown }).code === 'string' && typeof (err as { status: unknown }).status === 'number' && typeof (err as { message: unknown }).message === 'string') {
+    return { status: (err as { status: number }).status, code: (err as { code: string }).code, message: (err as { message: string }).message };
   }
   return { status: fallbackStatus, code: fallbackCode, message: fallbackMessage };
 }
 
-/**
- * Minimal API kernel. No broker, market-data, or order routes.
- * Protected routes require an injected GatewayAuth port.
- */
+function securityKey(req: GatewayRequest, principal: GatewayPrincipal, path: string): string {
+  if (principal.role !== 'anonymous') return `${principal.id}:${path}`;
+  const client = header(req.headers, 'x-client-id');
+  return client && client.length <= 128 && isSafeCorrelationId(client) ? `anon:${client}:${path}` : `anon:${path}`;
+}
+
+/** Minimal API kernel. Security is additive; no broker, market-data, or order routes. */
 export function handleRequest(
   req: GatewayRequest,
   config: GatewayConfig,
@@ -171,142 +134,56 @@ export function handleRequest(
   users?: GatewayUsers,
   entitlements?: GatewayEntitlements,
   telemetry?: GatewayTelemetry,
+  security?: GatewaySecurity,
 ): GatewayResponse {
   const started = Date.now();
   const correlationId = correlationIdFrom(req);
   const method = req.method.toUpperCase();
   const path = req.path.split('?')[0] ?? req.path;
   const permission = requiredPermission(method, path);
-
   let principal: GatewayPrincipal = { id: 'anonymous', role: 'anonymous' };
   const respond = (response: GatewayResponse): GatewayResponse => {
-    telemetry?.recordRequest({
-      method,
-      path,
-      status: response.status,
-      durationMs: Math.max(0, Date.now() - started),
-      correlationId,
-      principalId: principal.id,
-      principalRole: principal.role,
-    });
+    telemetry?.recordRequest({ method, path, status: response.status, durationMs: Math.max(0, Date.now() - started), correlationId, principalId: principal.id, principalRole: principal.role });
     return response;
   };
+
+  if (req.body !== undefined) {
+    const safe = validateSafeJson(req.body);
+    if (!safe.ok) return respond(json(400, { error: { code: safe.code, message: safe.message } }, correlationId));
+    const sized = validateBodySize(req.body, security?.maxBodyBytes);
+    if (!sized.ok) return respond(json(413, { error: { code: sized.code, message: sized.message } }, correlationId));
+  }
+
   if (permission) {
-    if (!auth) {
-      return respond(json(
-        401,
-        {
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        },
-        correlationId,
-      ));
-    }
-    try {
-      principal = auth.authenticate(header(req.headers, 'authorization'));
-    } catch (err) {
+    if (!auth) return respond(json(401, { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, correlationId));
+    try { principal = auth.authenticate(header(req.headers, 'authorization')); }
+    catch (err) {
       const parsed = authErrorBody(err, 'UNAUTHORIZED', 'Authentication required', 401);
+      const decision = security?.rateLimiter?.check(securityKey(req, principal, path));
+      if (decision && !decision.allowed) return respond(json(429, { error: { code: 'RATE_LIMITED', message: 'Too many requests' } }, correlationId, rateLimitHeaders({}, decision.remaining, decision.retryAfterSeconds)));
       return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId));
     }
-    if (principal.role === 'anonymous') {
-      return respond(json(
-        401,
-        {
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        },
-        correlationId,
-      ));
-    }
-    if (!auth.can(principal, permission)) {
-      return respond(json(
-        403,
-        {
-          error: {
-            code: 'FORBIDDEN',
-            message: `Missing permission: ${permission}`,
-          },
-        },
-        correlationId,
-      ));
-    }
+    if (principal.role === 'anonymous') return respond(json(401, { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, correlationId));
+    if (!auth.can(principal, permission)) return respond(json(403, { error: { code: 'FORBIDDEN', message: `Missing permission: ${permission}` } }, correlationId));
   }
 
-  if (method === 'GET' && path === '/health') {
-    return respond(json(
-      200,
-      {
-        status: 'ok',
-        service: config.serviceName,
-        version: config.version,
-        liveTradingEnabled: config.liveTradingEnabled,
-      },
-      correlationId,
-    ));
+  if (security?.rateLimiter && permission) {
+    const decision = security.rateLimiter.check(securityKey(req, principal, path));
+    if (!decision.allowed) return respond(json(429, { error: { code: 'RATE_LIMITED', message: 'Too many requests' } }, correlationId, rateLimitHeaders({}, decision.remaining, decision.retryAfterSeconds)));
   }
 
-  if (method === 'GET' && path === '/ready') {
-    return respond(json(
-      200,
-      {
-        status: 'ok',
-        tradingMode: config.tradingMode,
-        liveTradingEnabled: config.liveTradingEnabled,
-        killSwitchActive: config.killSwitchActive,
-      },
-      correlationId,
-    ));
-  }
-
-  if (method === 'GET' && path === '/v1/execution/policy') {
-    return respond(json(
-      200,
-      {
-        requestedMode: config.tradingMode,
-        liveTradingEnabled: config.liveTradingEnabled,
-        killSwitchActive: config.killSwitchActive,
-        paperIsolatedFromLive: true,
-      },
-      correlationId,
-    ));
-  }
-
-  if (method === 'GET' && path === '/v1/me') {
-    return respond(json(
-      200,
-      {
-        id: principal.id,
-        role: principal.role,
-      },
-      correlationId,
-    ));
-  }
+  if (method === 'GET' && path === '/health') return respond(json(200, { status: 'ok', service: config.serviceName, version: config.version, liveTradingEnabled: config.liveTradingEnabled }, correlationId));
+  if (method === 'GET' && path === '/ready') return respond(json(200, { status: 'ok', tradingMode: config.tradingMode, liveTradingEnabled: config.liveTradingEnabled, killSwitchActive: config.killSwitchActive }, correlationId));
+  if (method === 'GET' && path === '/v1/execution/policy') return respond(json(200, { requestedMode: config.tradingMode, liveTradingEnabled: config.liveTradingEnabled, killSwitchActive: config.killSwitchActive, paperIsolatedFromLive: true }, correlationId));
+  if (method === 'GET' && path === '/v1/me') return respond(json(200, { id: principal.id, role: principal.role }, correlationId));
 
   if (path === '/v1/profile' || path === '/v1/settings') {
-    if (!users) {
-      return respond(json(
-        500,
-        { error: { code: 'PERSISTENCE_FAILURE', message: 'User directory is not configured' } },
-        correlationId,
-      ));
-    }
+    if (!users) return respond(json(500, { error: { code: 'PERSISTENCE_FAILURE', message: 'User directory is not configured' } }, correlationId));
     try {
-      if (method === 'GET' && path === '/v1/profile') {
-        return respond(json(200, users.getProfile(principal.id), correlationId));
-      }
-      if (method === 'PATCH' && path === '/v1/profile') {
-        return respond(json(200, users.updateProfile(principal.id, req.body), correlationId));
-      }
-      if (method === 'GET' && path === '/v1/settings') {
-        return respond(json(200, users.getSettings(principal.id), correlationId));
-      }
-      if (method === 'PATCH' && path === '/v1/settings') {
-        return respond(json(200, users.updateSettings(principal.id, req.body), correlationId));
-      }
+      if (method === 'GET' && path === '/v1/profile') return respond(json(200, users.getProfile(principal.id), correlationId));
+      if (method === 'PATCH' && path === '/v1/profile') return respond(json(200, users.updateProfile(principal.id, req.body), correlationId));
+      if (method === 'GET' && path === '/v1/settings') return respond(json(200, users.getSettings(principal.id), correlationId));
+      if (method === 'PATCH' && path === '/v1/settings') return respond(json(200, users.updateSettings(principal.id, req.body), correlationId));
     } catch (err) {
       const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
       return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId));
@@ -314,67 +191,16 @@ export function handleRequest(
   }
 
   if (path === '/v1/entitlements' || path === '/v1/subscription') {
-    if (method === 'PATCH' || method === 'POST' || method === 'PUT') {
-      return respond(json(
-        405,
-        {
-          error: {
-            code: 'NOT_WRITABLE',
-            message: 'Subscription and entitlements cannot be changed through this API',
-          },
-        },
-        correlationId,
-      ));
-    }
+    if (method === 'PATCH' || method === 'POST' || method === 'PUT') return respond(json(405, { error: { code: 'NOT_WRITABLE', message: 'Subscription and entitlements cannot be changed through this API' } }, correlationId));
     if (method === 'GET' && path === '/v1/entitlements') {
-      if (!entitlements) {
-        return respond(json(
-          500,
-          { error: { code: 'PERSISTENCE_FAILURE', message: 'Entitlement directory is not configured' } },
-          correlationId,
-        ));
-      }
-      try {
-        return respond(json(200, entitlements.getEntitlements(principal.id), correlationId));
-      } catch (err) {
-        const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400);
-        return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId));
-      }
+      if (!entitlements) return respond(json(500, { error: { code: 'PERSISTENCE_FAILURE', message: 'Entitlement directory is not configured' } }, correlationId));
+      try { return respond(json(200, entitlements.getEntitlements(principal.id), correlationId)); }
+      catch (err) { const parsed = authErrorBody(err, 'INVALID_INPUT', 'Invalid request', 400); return respond(json(parsed.status, { error: { code: parsed.code, message: parsed.message } }, correlationId)); }
     }
   }
 
-  if (method === 'GET' && path === '/v1/admin/status') {
-    return respond(json(
-      200,
-      {
-        service: config.serviceName,
-        role: principal.role,
-        liveTradingEnabled: config.liveTradingEnabled,
-      },
-      correlationId,
-    ));
-  }
+  if (method === 'GET' && path === '/v1/admin/status') return respond(json(200, { service: config.serviceName, role: principal.role, liveTradingEnabled: config.liveTradingEnabled }, correlationId));
+  if (method === 'GET' && path === '/v1/admin/metrics') return respond(json(200, { service: config.serviceName, liveTradingEnabled: config.liveTradingEnabled, metrics: telemetry?.metrics?.snapshot() ?? { counters: [], histograms: [] } }, correlationId));
 
-  if (method === 'GET' && path === '/v1/admin/metrics') {
-    return respond(json(
-      200,
-      {
-        service: config.serviceName,
-        liveTradingEnabled: config.liveTradingEnabled,
-        metrics: telemetry?.metrics?.snapshot() ?? { counters: [], histograms: [] },
-      },
-      correlationId,
-    ));
-  }
-
-  return respond(json(
-    404,
-    {
-      error: {
-        code: 'NOT_FOUND',
-        message: `No route for ${method} ${path}`,
-      },
-    },
-    correlationId,
-  ));
+  return respond(json(404, { error: { code: 'NOT_FOUND', message: `No route for ${method} ${path}` } }, correlationId));
 }
