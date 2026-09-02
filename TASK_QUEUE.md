@@ -24,7 +24,7 @@ Only mark `DONE` with verification evidence.
 - [x] T020 — Market-data provider interface
 - [x] T021 — Historical data pipeline
 - [x] T022 — Real-time/WebSocket pipeline
-- [ ] T023 — Data normalization and validation
+- [x] T023 — Data normalization and validation
 - [ ] T024 — Market/session/timezone support
 
 ## Phase 3 — Charts and Markets
@@ -134,3 +134,11 @@ Follow dependency order. Do not skip directly to live trading, real-money compet
 - Pipeline provides provider-neutral realtime subscriptions, validated quote/candle events, per-subscription instrument filtering, lifecycle close/closeAll handling, and a bounded in-memory buffer with overflow reporting.
 - Tests cover realtime forwarding/filtering, unsupported providers, malformed events, and buffer behavior.
 - No vendor WebSocket SDK, exchange credentials, broker integration, order execution, or live trading path was added.
+
+## T023 Verification Evidence
+- Implementation branch: `agent/T023-data-normalization`
+- Implementation commits: `04761a96851a323c73c06f26a0819348bc1bad0e`, `0e97db3cd898aa8a1ad08e401213b8bae45ec199`, `b0630b23fed981c9280c3438a5de739dc59a7c03`, `583cbdd2d223be2d024c1e2d0edb521874c9e11e`, `8c52b2a619407f809bb076822a6bd6f76627272b`
+- GitHub Actions validation run: `33665551997` — PASS
+- GitHub Actions validate job: `100366281891` — PASS
+- Added canonical quote/candle normalization helpers, deterministic candle sorting/deduplication, stronger quote validation requiring a usable price, and regression tests.
+- No broker integration, exchange credentials, order execution, or live trading path was added.
