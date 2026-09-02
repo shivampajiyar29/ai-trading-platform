@@ -18,7 +18,7 @@ Only mark `DONE` with verification evidence.
 - [x] T012 — User/profile/settings
 - [x] T013 — Subscription/entitlement abstraction
 - [x] T014 — Observability foundation
-- [x] T015 — Security foundation
+- [ ] T015 — Security foundation (IN_PROGRESS — implementation persisted; verification pending)
 
 ## Phase 2 — Market Data
 - [ ] T020 — Market-data provider interface
