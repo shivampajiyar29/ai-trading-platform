@@ -29,13 +29,22 @@ export function validatePlainObject(value: unknown, field = 'body'): ValidationR
   return { ok: true, value: value as Record<string, unknown> };
 }
 
+function utf8ByteLength(value: string): number {
+  let bytes = 0;
+  for (const character of value) {
+    const code = character.codePointAt(0) ?? 0;
+    bytes += code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4;
+  }
+  return bytes;
+}
+
 export function estimateJsonBytes(value: unknown): number {
-  try { return new TextEncoder().encode(JSON.stringify(value)).byteLength; } catch { return Number.POSITIVE_INFINITY; }
+  try { return utf8ByteLength(JSON.stringify(value)); } catch { return Number.POSITIVE_INFINITY; }
 }
 
 export function validateBodySize(value: unknown, maxBytes = DEFAULT_MAX_BODY_BYTES): ValidationResult<unknown> {
   const bytes = estimateJsonBytes(value);
-  if (bytes > maxBytes) return { ok: false, code: 'REQUEST_TOO_LARGE', message: 'Request body exceeds maximum size' };
+  if (!Number.isFinite(maxBytes) || maxBytes <= 0 || bytes > maxBytes) return { ok: false, code: 'REQUEST_TOO_LARGE', message: 'Request body exceeds maximum size' };
   return { ok: true, value };
 }
 
