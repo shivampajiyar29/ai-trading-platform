@@ -18,7 +18,7 @@ Only mark `DONE` with verification evidence.
 - [x] T012 — User/profile/settings
 - [x] T013 — Subscription/entitlement abstraction
 - [x] T014 — Observability foundation
-- [ ] T015 — Security foundation (IN_PROGRESS — implementation persisted; verification pending)
+- [x] T015 — Security foundation
 
 ## Phase 2 — Market Data
 - [ ] T020 — Market-data provider interface
@@ -101,3 +101,10 @@ Agents may split a task into subtasks, but must update this file before handing 
 
 ## Current Execution Rule
 Follow dependency order. Do not skip directly to live trading, real-money competitions, lottery/gambling, or token functionality. Live trading remains disabled by default until later verified gates.
+
+## T015 Verification Evidence
+- Final implementation state: `d50bcb9ef77d08a470475c1c3b616887fcdc2e47`
+- GitHub Actions validation run: `33656835274` — PASS
+- Typecheck: PASS
+- Test suite: PASS
+- T901 remains the independent final security-audit gate.
