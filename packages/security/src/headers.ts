@@ -10,7 +10,7 @@ export const DEFAULT_SECURITY_HEADERS: SecurityHeaders = {
 };
 
 export function applySecurityHeaders(headers: Record<string, string>): Record<string, string> {
-  const result = { ...headers };
+  const result: Record<string, string> = { ...headers };
   for (const [key, value] of Object.entries(DEFAULT_SECURITY_HEADERS)) {
     if (!Object.keys(result).some((existing) => existing.toLowerCase() === key)) result[key] = value;
   }
@@ -18,7 +18,7 @@ export function applySecurityHeaders(headers: Record<string, string>): Record<st
 }
 
 export function rateLimitHeaders(headers: Record<string, string>, remaining: number, retryAfterSeconds = 0): Record<string, string> {
-  const result = { ...headers, 'x-ratelimit-remaining': String(Math.max(0, remaining)) };
+  const result: Record<string, string> = { ...headers, 'x-ratelimit-remaining': String(Math.max(0, remaining)) };
   if (retryAfterSeconds > 0) result['retry-after'] = String(retryAfterSeconds);
   return result;
 }
