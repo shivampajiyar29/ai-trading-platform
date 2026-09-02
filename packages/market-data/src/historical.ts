@@ -1,4 +1,3 @@
-import { InstrumentId } from '@ai-trading-platform/domain';
 import {
   type Candle,
   type MarketDataInterval,
@@ -18,15 +17,13 @@ const INTERVAL_MS: Record<MarketDataInterval, number> = {
 };
 
 export interface HistoricalDataRequest {
-  readonly instrumentId: InstrumentId;
+  readonly instrumentId: import('@ai-trading-platform/domain').InstrumentId;
   readonly interval: MarketDataInterval;
   readonly range: MarketDataRange;
 }
 
 export interface HistoricalDataPipelineOptions {
-  /** Maximum number of candles requested from the provider in one call. */
   readonly maxCandlesPerRequest?: number;
-  /** Optional sink invoked once with the final normalized candle series. */
   readonly sink?: (candles: readonly Candle[]) => Promise<void> | void;
 }
 
@@ -36,16 +33,10 @@ export interface HistoricalDataResult {
   readonly chunks: number;
 }
 
-/**
- * Provider-independent historical ingestion pipeline.
- *
- * The pipeline owns chunking, validation, ordering and duplicate removal. It
- * deliberately does not persist data itself; callers can provide a sink so
- * storage can be added later without coupling the provider to a database.
- */
+/** Provider-independent historical ingestion: chunk, validate, normalize, deduplicate and sort. */
 export class HistoricalDataPipeline {
   private readonly maxCandlesPerRequest: number;
-  private readonly sink?: (candles: readonly Candle[]) => Promise<void> | void;
+  private readonly sink: ((candles: readonly Candle[]) => Promise<void> | void) | undefined;
 
   constructor(private readonly provider: MarketDataProvider, options: HistoricalDataPipelineOptions = {}) {
     this.maxCandlesPerRequest = options.maxCandlesPerRequest ?? 5_000;
@@ -85,12 +76,10 @@ export class HistoricalDataPipeline {
 }
 
 function splitRange(range: MarketDataRange, interval: MarketDataInterval, maxCandles: number): MarketDataRange[] {
-  const step = INTERVAL_MS[interval];
-  const chunkMs = step * maxCandles;
+  const chunkMs = INTERVAL_MS[interval] * maxCandles;
   const from = range.from.getTime();
   const to = range.to.getTime();
   const result: MarketDataRange[] = [];
-
   for (let cursor = from; cursor < to; cursor += chunkMs) {
     result.push({ from: new Date(cursor), to: new Date(Math.min(cursor + chunkMs, to)) });
   }
@@ -100,8 +89,6 @@ function splitRange(range: MarketDataRange, interval: MarketDataInterval, maxCan
 function deduplicateAndSort(candles: readonly Candle[]): Candle[] {
   const byTimestamp = new Map<string, Candle>();
   for (const candle of candles) {
-    // A provider must return one canonical candle per instrument/timestamp.
-    // Later chunks may overlap at boundaries, so the first valid occurrence wins.
     const key = `${candle.instrumentId.toString()}|${candle.timestamp.getTime()}`;
     if (!byTimestamp.has(key)) byTimestamp.set(key, candle);
   }
