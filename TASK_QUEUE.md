@@ -21,7 +21,7 @@ Only mark `DONE` with verification evidence.
 - [x] T015 — Security foundation
 
 ## Phase 2 — Market Data
-- [ ] T020 — Market-data provider interface
+- [x] T020 — Market-data provider interface
 - [ ] T021 — Historical data pipeline
 - [ ] T022 — Real-time/WebSocket pipeline
 - [ ] T023 — Data normalization and validation
@@ -108,3 +108,11 @@ Follow dependency order. Do not skip directly to live trading, real-money compet
 - Typecheck: PASS
 - Test suite: PASS
 - T901 remains the independent final security-audit gate.
+
+## T020 Verification Evidence
+- Implementation branch: `agent/T020-market-data-foundation`
+- Implementation head before checkpoint docs: `e2d27c4285ca811ca45afdcfc7c58d54eb2e7183`
+- GitHub Actions validation run: `33664265222` — PASS
+- GitHub Actions validate job: `100362004399` — PASS
+- Provider interface, normalized types, validation, registry, and tests are present.
+- No live trading, broker integration, exchange credentials, or execution path was added.
