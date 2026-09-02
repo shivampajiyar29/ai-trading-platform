@@ -27,25 +27,17 @@ export interface RealtimeMarketDataProvider {
 }
 
 export interface RealtimeMarketDataPipelineOptions {
-  /** Maximum events retained while the consumer is processing synchronously. */
   readonly maxBufferedEvents?: number;
   readonly onEvent?: (event: MarketDataEvent) => Promise<void> | void;
   readonly onError?: (error: unknown) => void;
 }
 
-/**
- * Provider-neutral realtime market-data boundary.
- *
- * Providers own WebSocket/SSE/vendor details. The pipeline owns subscription
- * lifecycle, event validation, instrument filtering and a bounded in-memory
- * buffer so an unhealthy consumer cannot grow memory without limit.
- */
+/** Provider-neutral realtime boundary; providers own WebSocket/SSE/vendor details. */
 export class RealtimeMarketDataPipeline {
   private readonly maxBufferedEvents: number;
   private readonly onEvent?: (event: MarketDataEvent) => Promise<void> | void;
   private readonly onError?: (error: unknown) => void;
   private readonly subscriptions = new Map<string, RealtimeSubscription>();
-  private readonly allowedInstruments = new Set<string>();
   private processing = false;
   private readonly buffer: MarketDataEvent[] = [];
 
@@ -61,12 +53,11 @@ export class RealtimeMarketDataPipeline {
 
   async subscribe(request: RealtimeSubscriptionRequest): Promise<RealtimeSubscription> {
     if (request.instrumentIds.length === 0) throw new Error('At least one instrument is required');
-    this.allowedInstruments.clear();
-    for (const instrumentId of request.instrumentIds) this.allowedInstruments.add(instrumentId.toString());
+    const allowedInstruments = new Set(request.instrumentIds.map((instrumentId) => instrumentId.toString()));
 
     const upstream = await this.provider.subscribe(
       request,
-      (event) => this.accept(event),
+      (event) => this.accept(event, allowedInstruments),
       (error) => this.onError?.(error),
     );
     const subscription: RealtimeSubscription = {
@@ -91,10 +82,9 @@ export class RealtimeMarketDataPipeline {
     return this.buffer.length;
   }
 
-  private accept(event: MarketDataEvent): void {
+  private accept(event: MarketDataEvent, allowedInstruments: ReadonlySet<string>): void {
     try {
-      const instrumentId = event.data.instrumentId;
-      if (!this.allowedInstruments.has(instrumentId.toString())) return;
+      if (!allowedInstruments.has(event.data.instrumentId.toString())) return;
       if (event.type === 'quote') validateQuote(event.data);
       else validateCandle(event.data);
 
