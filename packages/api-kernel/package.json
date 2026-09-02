@@ -15,5 +15,8 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-trading-platform/security": "0.1.0"
   }
 }
