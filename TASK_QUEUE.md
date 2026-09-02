@@ -23,7 +23,7 @@ Only mark `DONE` with verification evidence.
 ## Phase 2 — Market Data
 - [x] T020 — Market-data provider interface
 - [x] T021 — Historical data pipeline
-- [ ] T022 — Real-time/WebSocket pipeline
+- [x] T022 — Real-time/WebSocket pipeline
 - [ ] T023 — Data normalization and validation
 - [ ] T024 — Market/session/timezone support
 
@@ -125,3 +125,12 @@ Follow dependency order. Do not skip directly to live trading, real-money compet
 - Pipeline provides provider-neutral historical candle loading, request chunking, provider capability checks, candle validation, instrument consistency checks, deterministic sorting/deduplication, and an optional persistence sink.
 - Tests cover normalization/deduplication, unsupported historical providers, and malformed candles.
 - No broker integration, exchange credentials, real-money execution, or live trading path was added.
+
+## T022 Verification Evidence
+- Implementation branch: `agent/T022-realtime-market-data`
+- Realtime pipeline implementation commits: `e0fb88a3c8be2583ae457612cd4987c91345c350`, `fe96e70f2d4e826152b5a5282c067a6ba7869a2a`, `9765e771c15c764270a51490c8204d281ac342bb`, `1ad00ace42fc837237b4c08933de4dce24b38d96`, `9b399a9a8911a43241fc2cc301619330b1fe884b`
+- GitHub Actions validation run: `33665207173` — PASS
+- GitHub Actions validate job: `100365124861` — PASS
+- Pipeline provides provider-neutral realtime subscriptions, validated quote/candle events, per-subscription instrument filtering, lifecycle close/closeAll handling, and a bounded in-memory buffer with overflow reporting.
+- Tests cover realtime forwarding/filtering, unsupported providers, malformed events, and buffer behavior.
+- No vendor WebSocket SDK, exchange credentials, broker integration, order execution, or live trading path was added.
