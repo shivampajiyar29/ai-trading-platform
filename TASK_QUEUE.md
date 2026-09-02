@@ -22,7 +22,7 @@ Only mark `DONE` with verification evidence.
 
 ## Phase 2 — Market Data
 - [x] T020 — Market-data provider interface
-- [ ] T021 — Historical data pipeline
+- [x] T021 — Historical data pipeline
 - [ ] T022 — Real-time/WebSocket pipeline
 - [ ] T023 — Data normalization and validation
 - [ ] T024 — Market/session/timezone support
@@ -116,3 +116,12 @@ Follow dependency order. Do not skip directly to live trading, real-money compet
 - GitHub Actions validate job: `100362004399` — PASS
 - Provider interface, normalized types, validation, registry, and tests are present.
 - No live trading, broker integration, exchange credentials, or execution path was added.
+
+## T021 Verification Evidence
+- Implementation branch: `agent/T020-market-data-foundation`
+- Historical pipeline commits: `c63439165f09023cfa5eb5ee4c2016c58f93ba36`, `5075e8112425cc6fb693ed9803cdcda798b86a1f`, `8dbd5ecf03a05a7cc86850a7434b9d7f7709077d`, `e17c17f8023cb72d0bb549f28b9c0d706a2ca436`
+- GitHub Actions validation run: `33664836940` — PASS
+- GitHub Actions validate job: `100363899583` — PASS
+- Pipeline provides provider-neutral historical candle loading, request chunking, provider capability checks, candle validation, instrument consistency checks, deterministic sorting/deduplication, and an optional persistence sink.
+- Tests cover normalization/deduplication, unsupported historical providers, and malformed candles.
+- No broker integration, exchange credentials, real-money execution, or live trading path was added.
