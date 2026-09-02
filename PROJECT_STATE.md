@@ -10,7 +10,7 @@ Working branch: `agent/T015-security-foundation`
 ## Verified Work
 - T005–T014 foundation slices are in place.
 - T015 Security Foundation is implemented and persisted on the T015 branch.
-- GitHub Actions validation passed on the final T015 implementation state.
+- GitHub Actions validation passed on the final T015 branch state.
 - Live trading remains disabled by default; no broker, payment, or order execution route was added.
 
 ## T015 Security Foundation
@@ -29,8 +29,8 @@ Working branch: `agent/T015-security-foundation`
 CHECKPOINT_ID: FOUNDATION-015
 STATUS: VERIFIED
 FINAL_IMPLEMENTATION_COMMIT: `d50bcb9ef77d08a470475c1c3b616887fcdc2e47`
-FINAL_VERIFICATION_COMMIT: `447a612b536b2c6f2371584f8c152817f467e1a7`
-CI_RUN: `33656835274` — PASS
+FINAL_CHECKPOINT_COMMIT: `7485bfc6e1167d646bb24debafd87e7e23c882bb`
+CI_RUN: `33656957067` — PASS
 
 ## Resume Point
 T015 is complete. The next implementation task is T020 — Market-data provider interface. Preserve the security foundation and do not enable live trading. Independent final security audit remains a later T901 quality gate.
