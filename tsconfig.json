@@ -10,6 +10,7 @@
     { "path": "./packages/auth" },
     { "path": "./packages/users" },
     { "path": "./packages/entitlements" },
-    { "path": "./packages/observability" }
+    { "path": "./packages/observability" },
+    { "path": "./packages/market-data" }
   ]
 }
