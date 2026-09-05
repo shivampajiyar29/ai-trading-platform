@@ -55,3 +55,25 @@ Status: OPEN
 Severity: INFO
 
 T014 metrics, traces, and logs stay in memory. There is no log shipper, Prometheus exporter, or distributed tracer. Replace sinks later; keep the `PlatformTelemetry` / `GatewayTelemetry` shapes.
+
+## KI-012 — Market Calendar Is In-Memory Only
+
+Status: OPEN
+Severity: INFO
+
+T024 DefaultMarketCalendar stores holidays and session overrides in memory (Sets and Maps). Suitable for single-instance deployments and testing. Production should persist holidays to a database and implement caching. MarketCalendar interface is compatible with database-backed implementations.
+
+## KI-013 — Session Times Are Fixed Per Day
+
+Status: OPEN
+Severity: INFO
+
+T024 markets define standard sessions with fixed start/end times. If a market changes trading hours on a specific day (e.g., early close), a TradingDay override with custom sessions must be added manually. No algorithmic or dynamic session adjustment. Future enhancement: session override mechanism.
+
+## KI-014 — Holidays Are Not Timezone-Aware
+
+Status: OPEN
+Severity: LOW
+
+T024 holidays are stored as date strings (YYYY-MM-DD) without timezone association. All markets must agree on holiday dates. If two markets observe the same holiday on different dates, they must be represented as separate holidays. Current design is sufficient for MVP; future enhancement: per-market holiday calendars.
+

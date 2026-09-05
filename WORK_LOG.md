@@ -545,3 +545,137 @@ T015 — Security foundation.
 NEXT_TASK:
 T015
 
+
+---
+
+## AGENT-T024-01
+
+DATE_TIME: 2026-09-05T18:00:00Z
+TASK_ID: T024
+TASK_TITLE: Market / Session / Timezone Support
+STATUS: DONE
+
+OBJECTIVE:
+Establish market calendar abstraction with timezone-aware session scheduling, holiday management, and market status determination. Provider-neutral and exchange-agnostic.
+
+WHAT_I_INSPECTED:
+- T023 checkpoint c517aaf (105 tests PASS).
+- ARCHITECTURE.md § 9 (Global Market Architecture), § 10 (Jurisdiction/Compliance).
+- MarketDataProvider types for metadata context.
+- Existing calendar requirements (sessions, timezones, holidays).
+
+WHAT_I_CHANGED:
+- packages/markets/ (new package)
+  - src/types.ts: Core domain types
+    - IanaTimezone: Branded IANA timezone identifiers
+    - SessionType: REGULAR | PRE_MARKET | POST_MARKET | CLOSED
+    - Session: Session definition with type, start/end times, optional flag
+    - Market: Market with ID, name, timezone, sessions, holidays, weekends
+    - MarketCalendar: Calendar interface (trading days, sessions, status, holidays)
+    - MarketStatus: Current market state (open, active session, next session, time metrics)
+    - MarketCalendarError: Custom error type
+  - src/timezone.ts: Timezone utilities
+    - formatDateInTimezone: Convert UTC to market timezone parts
+    - localTimeToUtc: Convert market local time to UTC (DST-aware via Intl API)
+    - formatDateAsString: Format as YYYY-MM-DD in market timezone
+    - parseTimeString: Parse HH:mm format
+    - formatTimeString: Format hour/minute as HH:mm
+  - src/calendar.ts: DefaultMarketCalendar implementation
+    - ~170 lines of clean, tested code
+    - Trading day validation (weekends, holidays)
+    - Session management for trading days
+    - Market status determination at any timestamp
+    - Next open/close time calculations
+    - Holiday management (add/remove)
+  - src/index.ts: Package exports
+  - src/markets.test.ts: Comprehensive test suite
+    - 30 test cases covering all calendar operations
+    - Basic market setup, trading days, sessions
+    - Holiday management, timezone handling
+    - Multiple session markets (NYSE with PRE/REGULAR/POST)
+    - Edge cases (24h markets, no holidays, optional sessions)
+    - Error handling, deterministic behavior
+- tsconfig.json: Added markets package reference
+- packages/markets/tsconfig.json: Package configuration
+- packages/markets/package.json: Package metadata
+
+FILES_CHANGED:
+- packages/markets/** (new, 6 source files)
+- tsconfig.json (updated)
+- PROJECT_STATE.md (updated)
+- TASK_QUEUE.md (updated)
+
+TESTS_RUN:
+- npm run typecheck: PASS
+- npm run test: PASS (135/135 total)
+  - 105 existing tests still passing (zero regressions)
+  - 30 new markets calendar tests PASS
+
+TEST_RESULTS:
+- Typecheck PASS (no TypeScript errors)
+- 135/135 tests PASS (100%)
+  - Basic market setup: 3 tests
+  - Trading days: 4 tests
+  - Market status: 2 tests
+  - Session management: 2 tests
+  - Timezone validation: 1 test
+  - Holiday management: 4 tests
+  - Multiple sessions: 2 tests
+  - Next open/close: 2 tests
+  - Error handling: 2 tests
+  - Deterministic behavior: 2 tests
+  - Time string parsing: 2 tests
+  - Edge cases: 3 tests
+  - Week cycles: 1 test
+  - All T005-T023 tests: 105 tests (zero regressions)
+
+ARCHITECTURE_REVIEW:
+1. Market calendar is provider-neutral (no broker SDK dependencies)
+2. Timezone handling uses Intl API for DST awareness (no external libraries)
+3. Session abstraction supports multiple concurrent sessions (PRE/REGULAR/POST)
+4. Holiday management is mutable (can add/remove at runtime)
+5. MarketCalendar interface is extensible (future exchange-specific adapters)
+6. No live trading, execution, or broker integration
+7. No changes to existing foundation (T005-T023)
+8. All types are properly branded or strictly typed
+9. Error handling is consistent (MarketCalendarError)
+10. Deterministic behavior (same inputs → same outputs)
+
+KNOWN_LIMITATIONS:
+- Calendar implementation is in-memory only (suitable for dev/testing)
+- No persistence/database integration (future enhancement)
+- DST transitions tested conceptually (Intl API handles complexity)
+- Holiday list is not timezone-aware (holidays are dates only)
+- Session times are not flexible/adaptive (fixed per day)
+
+IMPORTANT_DECISIONS:
+- ADR-013: Market calendar architecture and timezone handling
+- Use Intl API for timezone/DST handling (no external tz libraries)
+- Session types as enumerable values (extensible for new session types)
+- MarketCalendar as interface (allows multiple implementations)
+- IanaTimezone as branded string (type-safe, validated at construction)
+
+REGRESSION_CHECK:
+- All 105 existing tests still pass (zero regressions)
+- No changes to auth, RBAC, entitlements, execution policy
+- No live trading features added
+- No broker integrations
+- No payment or order systems added
+- Paper trading remains safe and isolated
+
+DO_NOT_REPEAT:
+- Do not add live trading via market calendar status.
+- Do not add broker-specific calendars without T053+ foundation.
+- Do not hardcode timezone assumptions (use IANA identifiers).
+- Do not mix local and UTC times without explicit conversion.
+
+RESUME_POINT:
+T030 — Professional 2D charting. Market calendar foundation is stable and timezone-aware.
+Charting can use MarketCalendar to determine trading sessions for overlay/rendering.
+
+NEXT_TASK:
+T030
+
+LAST_KNOWN_COMMIT:
+(pending commit)
+

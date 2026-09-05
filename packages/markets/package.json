@@ -1,0 +1,10 @@
+{
+  "name": "@ai-trading-platform/markets",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {},
+  "dependencies": {
+    "@ai-trading-platform/domain": "0.1.0"
+  }
+}

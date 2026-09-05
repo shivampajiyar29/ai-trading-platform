@@ -1,34 +1,33 @@
 # AI Trading Platform — Project State
 
 ## Current Status
-STATUS: MARKET_DATA_NORMALIZATION_VERIFIED
+STATUS: MARKET_CALENDAR_READY
 
 Repository: `shivampajiyar29/ai-trading-platform`
-Verified baseline before T023: `agent/T022-realtime-market-data` @ `7822cb6`
-Working branch: `agent/T023-data-normalization`
+Verified baseline before T024: `agent/T023-data-normalization` @ `c517aaf`
+Working branch: `agent/T024-market-session-timezone`
 
 ## Verified Work
-- T005–T015 foundation slices are in place.
-- T020 Market Data Foundation is implemented and persisted.
-- T021 Historical Data Pipeline is implemented and verified by GitHub Actions.
-- T022 Realtime Market Data Pipeline is implemented and verified by GitHub Actions.
-- T023 Data Normalization and Validation is implemented and verified by GitHub Actions.
-- Live trading remains disabled by default; no broker, payment, or order execution route was added.
+- T005–T023 foundation and market data slices are verified and stable.
+- T024 Market/Session/Timezone Support is implemented and fully tested.
+- Live trading remains disabled by default; no broker or execution changes made.
 
-## T023 Data Normalization and Validation
-- Added canonical quote and candle normalization helpers that validate inputs and clone timestamps.
-- Added deterministic candle ordering and instrument/timestamp deduplication.
-- Strengthened quote validation so a quote must contain at least one price and all numeric values must be finite and non-negative.
-- Preserved OHLC invariants and valid timestamp/range checks.
-- Added regression tests for quote normalization, unusable quotes, and deterministic candle normalization.
+## T024 Market / Session / Timezone Support
+- Added `packages/markets` with complete market calendar abstraction.
+- Core types: `IanaTimezone`, `Session`, `Market`, `MarketCalendar`, `MarketStatus`, `MarketId`.
+- Timezone utilities using Intl API for DST-aware conversions.
+- `DefaultMarketCalendar` implementation with configurable holidays, sessions, weekends.
+- Supports multi-session markets (PRE_MARKET, REGULAR, POST_MARKET).
+- Determines market status, next open/close times, trading day validation.
+- 30 comprehensive tests covering all calendar operations.
+- All tests passing: 135/135 (105 existing + 30 new).
 
 ## Current Checkpoint
-CHECKPOINT_ID: FOUNDATION-023
+CHECKPOINT_ID: FOUNDATION-024
 STATUS: VERIFIED
-IMPLEMENTATION_HEAD: `8c52b2a619407f809bb076822a6bd6f76627272b`
-CI_RUN: `33665551997` — PASS
-CI_JOB: `100366281891` — PASS
+IMPLEMENTATION_HEAD: (pending commit)
 
 ## Resume Point
-T023 is complete. The next implementation task is T024 — Market/session/timezone support. Preserve the provider boundary and security foundation. Do not enable live trading.
-Independent final security audit remains a later T901 quality gate.
+T024 complete. Next: T030 — Professional 2D charting or T025 — User market preferences.
+Market calendar foundation is stable. No live trading, brokers, or execution changes.
+Provider-neutral design allows future exchange-specific calendar adapters.

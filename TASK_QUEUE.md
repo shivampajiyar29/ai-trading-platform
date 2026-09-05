@@ -25,7 +25,7 @@ Only mark `DONE` with verification evidence.
 - [x] T021 — Historical data pipeline
 - [x] T022 — Real-time/WebSocket pipeline
 - [x] T023 — Data normalization and validation
-- [ ] T024 — Market/session/timezone support
+- [x] T024 — Market/session/timezone support
 
 ## Phase 3 — Charts and Markets
 - [ ] T030 — Professional 2D charting

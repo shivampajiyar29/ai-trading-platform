@@ -157,3 +157,23 @@ Architecture §12 requires logs, metrics, and correlation IDs before later healt
 Consequence:
 Do not log raw Bearer tokens. Do not treat metrics as a live-trading control plane. Do not add a vendor APM dependency in this foundation slice.
 
+
+## ADR-013 — Market Calendar Is Provider-Neutral and Timezone-Aware
+
+Status: ACCEPTED
+
+Date: 2026-09-05
+
+Decision:
+T024 adds `packages/markets` with a provider-neutral market calendar abstraction. MarketCalendar interface defines trading days, sessions, status, and holidays. DefaultMarketCalendar implementation uses Intl API for timezone-aware date/time conversions with automatic DST handling. Sessions can be REGULAR, PRE_MARKET, or POST_MARKET. Holidays are date-based only (not timezone-specific). No broker or exchange SDK dependencies.
+
+Reason:
+Architecture §9 (Global Market Architecture) requires country-neutral instruments with per-market sessions and timezones. §10 (Jurisdiction/Compliance) requires capability-driven regional availability. Calendar abstraction enables charting (T030+), trading session validation (T050+), and future exchange-specific adapters (T053+) without coupling to a single exchange.
+
+Consequence:
+- Future exchange-specific calendars can implement the MarketCalendar interface without changes to downstream consumers.
+- Timezone handling via Intl API avoids external timezone libraries; trade-off is that DST transitions are delegated to the platform.
+- Session times are fixed per trading day (not adaptive/algorithmic); if trading hours change mid-day, a new TradingDay override is needed.
+- In-memory calendar is suitable for dev/testing; production deployments should persist holidays and overrides to a database.
+
+EOFLOG

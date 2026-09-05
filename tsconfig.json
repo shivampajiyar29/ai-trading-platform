@@ -11,6 +11,7 @@
     { "path": "./packages/users" },
     { "path": "./packages/entitlements" },
     { "path": "./packages/observability" },
-    { "path": "./packages/market-data" }
+    { "path": "./packages/market-data" },
+    { "path": "./packages/markets" }
   ]
 }
